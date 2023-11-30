@@ -1,7 +1,7 @@
 --Rings original by unknown
 --Stuff rewritten and modified by NepDisk and Indev
 
-freeslot("SPR_RNGS", "SPR_RGFD", "S_RINGSO", "S_V2RFDE", "S_USERNG", "MT_RINGSO", "MT_RINGSOMAP", "MT_RINGGET", "MT_RINGUSE")
+freeslot("SPR_RNGS", "SPR_RGFD", "S_RINGSO", "S_V2RFDE", "S_USERNG", "MT_RINGSO", "MT_RINGSOMAP", "MT_RINGGET", "MT_RINGUSE","MT_RINGPOINT")
 
 freeslot("SPR_STSP", "S_STGSPK", "S_STGSP1", "S_STGSP2", "MT_STINGSPIKE")
 freeslot("SPR_STAL", "S_STALR1", "S_STALR2", "MT_STINGALERT")
@@ -23,7 +23,6 @@ rawset(_G, "ringCrossmod", {
 	mapSoundData = {} // array with 4 values, should be your custom sound values
 })
 
-//local cv_ringusecap.value = 15
 rawset(_G, "ringsOn", false)
 rawset(_G, "mapRingsPresent", false)
 
@@ -239,6 +238,18 @@ mobjinfo[MT_STINGALERT] = {
 	flags = MF_NOBLOCKMAP|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING|MF_NOGRAVITY
 }
 
+mobjinfo[MT_RINGPOINT] = {
+	doomednum = -1,
+	spawnstate = S_INVISIBLE,
+	spawnhealth = 1000,
+	radius = 8*FRACUNIT,
+	height = 8*FRACUNIT,
+	displayoffset = -1,
+	flags = MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_DONTENCOREMAP
+	
+}
+
+
 local function rgs_generateHFForPlayer(p)
     if p and p.valid and p.mo and p.mo.valid then
         return {{p.name, p.skincolor}, {skins[p.mo.skin].facemmap, p.skincolor}, p}
@@ -260,6 +271,79 @@ local function rgs_hideAlert(mo, p)
 		mo.state = S_INVISIBLE
 	end
 end
+
+local thisplayer
+
+hud.add(function(v, p, c)
+	thisplayer = p
+end)
+
+local function K_RingGainEFX(source, amount)
+
+	local st
+	local pt
+
+	if not (source.mo and source.mo.valid) then return end
+	if not (source or source.mo) then return end
+
+	
+
+	if (amount == 1)
+		st = S_BATTLEPOINT1A
+	elseif (amount == 2)
+		st = S_BATTLEPOINT2A
+	elseif (amount == 3)
+		st = S_BATTLEPOINT3A
+	elseif (amount == 4)
+		st = S_BATTLEPOINT4A
+	elseif (amount == 5)
+		st = S_BATTLEPOINT5A
+	elseif (amount == 6)
+		st = S_BATTLEPOINT6A
+	elseif (amount == 7)
+		st = S_BATTLEPOINT7A	
+	elseif (amount == 8)
+		st = S_BATTLEPOINT8A
+	elseif (amount == 9)
+		st = S_BATTLEPOINT9A
+	elseif (amount == 10)
+		st = S_BATTLEPOINT10A
+	else
+		return -- NO STATE!
+	end
+	if source.ringpt and source.ringpt.valid
+		P_RemoveMobj(source.ringpt)
+	end
+
+	source.ringpt = P_SpawnMobj(source.mo.x, source.mo.y, source.mo.z, MT_RINGPOINT)
+	source.ringpt.target = source.mo
+	source.ringpt.state = st
+	source.ringpt.color = source.skincolor
+
+end
+
+addHook("MobjThinker", function(mo)
+	if not ringsOn return end
+	if not (mo and mo.valid and mo.target and mo.target.valid) then return end
+	K_MatchGenericExtraFlags(mo, mo.target)
+	if (mo.target.player != thisplayer and (not splitscreen)) then mo.flags2 = $|MF2_DONTDRAW else mo.flags2 = $&(~MF2_DONTDRAW) end
+	
+	if (mo.movefactor < 48*mo.target.scale)
+		
+		mo.movefactor = $ + (48*mo.target.scale)/6
+			if (mo.movefactor > mo.target.height)
+				mo.movefactor = mo.target.height
+			end
+			
+	elseif (mo.movefactor > 48*mo.target.scale)
+		mo.movefactor =  $ - (48*mo.target.scale)/6
+			if (mo.movefactor < mo.target.height)
+				mo.movefactor = mo.target.height
+			end
+	end
+	P_MoveOrigin(mo, mo.target.x, mo.target.y, mo.target.z + (mo.target.height/2)*P_MobjFlip(mo.target) + mo.movefactor)
+end, MT_RINGPOINT)
+
 
 local cv_colorizedhud, cv_colorizedhudcolor, cv_kartdisplayspeed
 
@@ -848,20 +932,32 @@ local function brg_alertVisibilityLogic(p, mo)
 	end*/
 end
 
-rawset(_G, "doRingAward", function(p, amt)
-	if (p.numRings < rings.ringcap)
-		if ((p.numRings + amt) <= rings.ringcap)
+rawset(_G, "doRingAward", function(p, amt,disp)
+	if (p.numRings < cv_ringcap.value)
+		if ((p.numRings + amt) <= cv_ringcap.value)
 			if (ringsting.value == 0)
 				p.ringsToAward = $1 + amt
+				if disp
+					K_RingGainEFX(p,amt)
+				end
 			else
 				if (p.numRings >= 0)
 					p.ringsToAward = $1 + amt
+					if disp
+						K_RingGainEFX(p,amt)
+					end
 				else
 					p.ringsToAward = $1 + (amt*2)
+					if disp
+						K_RingGainEFX(p,amt*2)
+					end
 				end
 			end
 		else
-			p.ringsToAward = $1 + (rings.ringcap - p.numRings)
+			p.ringsToAward = $1 + (cv_ringcap.value - p.numRings)
+			if disp
+				K_RingGainEFX(p,(cv_ringcap.value - p.numRings))
+			end
 		end
 	end
 end)
@@ -1195,7 +1291,7 @@ addHook("MobjSpawn", function(mo)
 end, MT_RINGSOMAP)
 
 
-rawset(_G, "awardRingsFromObject", function(p, mo)
+rawset(_G, "awardRingsFromObject", function(p, mo,disp)
     local mos = mapobjectscale
     local numRingsDrop = (1+P_RandomKey(2))
     local ringSpillAng = (360/numRingsDrop)
@@ -1220,15 +1316,27 @@ rawset(_G, "awardRingsFromObject", function(p, mo)
         if (p.numRings + awardamount) <= cv_ringcap.value then
             if ringsting.value == 0 then
                 p.ringsToAward = $1 + awardamount
+				if disp
+					K_RingGainEFX(p,awardamount)
+				end
             else
                 if (p.numRings >= 0)
                     p.ringsToAward = $1 + awardamount
+					if disp
+						K_RingGainEFX(p,awardamount)
+					end
                 else
                     p.ringsToAward = $1 + awardamount*2
+					if disp
+						K_RingGainEFX(p,awardamount*2)
+					end
                 end
             end
         else
             p.ringsToAward = $1 + (cv_ringcap.value - p.numRings)
+			if disp
+				K_RingGainEFX(p,(cv_ringcap.value - p.numRings))
+			end
         end
     end
 end)
@@ -1239,7 +1347,7 @@ addHook("PlayerThink", function(p)
     if not p.mo then return end
     
     if p.kartstuff[k_itemroulette] and not p.lastitemroulette and p.kartstuff[k_roulettetype] ~= 2 then
-        awardRingsFromObject(p, p.mo)
+         awardRingsFromObject(p, p.mo,1)
     end
     
     p.lastitemroulette = p.kartstuff[k_itemroulette]
