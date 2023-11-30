@@ -452,7 +452,7 @@ local function drawRingHud(v, p)
 	end
 	
 	--If you have an spb on your tail or use too many rings show that your rings are locked.
-	if (p.rgUsed and p.rgUsed > cv_ringusecap.value) then
+	if (p.rgUsed and p.rgUsed > rings.ringusecap) then
 		v.draw((9-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff-1+cv_ringbary.value, ringLock, vflags)
 	end
 		
@@ -933,8 +933,8 @@ local function brg_alertVisibilityLogic(p, mo)
 end
 
 rawset(_G, "doRingAward", function(p, amt,disp)
-	if (p.numRings < cv_ringcap.value)
-		if ((p.numRings + amt) <= cv_ringcap.value)
+	if (p.numRings < rings.ringcap)
+		if ((p.numRings + amt) <= rings.ringcap)
 			if (ringsting.value == 0)
 				p.ringsToAward = $1 + amt
 				if disp
@@ -954,9 +954,9 @@ rawset(_G, "doRingAward", function(p, amt,disp)
 				end
 			end
 		else
-			p.ringsToAward = $1 + (cv_ringcap.value - p.numRings)
+			p.ringsToAward = $1 + (rings.ringcap - p.numRings)
 			if disp
-				K_RingGainEFX(p,(cv_ringcap.value - p.numRings))
+				K_RingGainEFX(p,(rings.ringcap - p.numRings))
 			end
 		end
 	end
@@ -1177,7 +1177,7 @@ end)
 addHook("TouchSpecial", function(mo, t)
 	if ((t) and (t.player))
 		local p = t.player
-		if ((p.numRings ~= nil) and (p.numRings < cv_ringcap.value))
+		if ((p.numRings ~= nil) and (p.numRings < rings.ringcap))
 			doRingAward(p, 1)
 		end
 		p = nil
@@ -1190,7 +1190,7 @@ addHook("MobjCollide", function(tm, mo)
 			if ((tm) and (tm.player))
 				local p = tm.player
 				
-				if ((p.numRings ~= nil) and (p.numRings < cv_ringcap.value))
+				if ((p.numRings ~= nil) and (p.numRings < rings.ringcap))
 					if (tm.momz < 0)
 						if (tm.z + tm.momz > mo.z + mo.height) then return end
 					elseif (tm.z > mo.z + mo.height) 
@@ -1304,7 +1304,7 @@ rawset(_G, "awardRingsFromObject", function(p, mo,disp)
         boxRing.fuse = 20*TICRATE
         boxRing.grabBuffer = 9
     end
-    if p.numRings < cv_ringcap.value then
+    if p.numRings < rings.ringcap then
         local awardamount = 10
         
         if p.kartstuff[k_position] == 1 then
@@ -1313,7 +1313,7 @@ rawset(_G, "awardRingsFromObject", function(p, mo,disp)
             awardamount = 5
         end
     
-        if (p.numRings + awardamount) <= cv_ringcap.value then
+        if (p.numRings + awardamount) <= rings.ringcap then
             if ringsting.value == 0 then
                 p.ringsToAward = $1 + awardamount
 				if disp
@@ -1333,9 +1333,9 @@ rawset(_G, "awardRingsFromObject", function(p, mo,disp)
                 end
             end
         else
-            p.ringsToAward = $1 + (cv_ringcap.value - p.numRings)
+            p.ringsToAward = $1 + (rings.ringcap - p.numRings)
 			if disp
-				K_RingGainEFX(p,(cv_ringcap.value - p.numRings))
+				K_RingGainEFX(p,(rings.ringcap - p.numRings))
 			end
         end
     end
