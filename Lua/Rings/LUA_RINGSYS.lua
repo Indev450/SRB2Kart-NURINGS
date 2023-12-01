@@ -278,48 +278,53 @@ hud.add(function(v, p, c)
 	thisplayer = p
 end)
 
+local intToBattlePointState = {
+	S_BATTLEPOINT1A,
+	S_BATTLEPOINT2A,
+	S_BATTLEPOINT3A,
+	S_BATTLEPOINT4A,
+	S_BATTLEPOINT5A,
+	S_BATTLEPOINT6A,
+	S_BATTLEPOINT7A,
+	S_BATTLEPOINT8A,
+	S_BATTLEPOINT9A,
+	S_BATTLEPOINT10A,
+}
+
+local function spawnRingPoint(source, amount)
+	source.ringpt = P_SpawnMobj(source.mo.x, source.mo.y, source.mo.z, MT_RINGPOINT)
+	source.ringpt.target = source.mo
+	source.ringpt.state = intToBattlePointState[amount]
+	source.ringpt.color = source.skincolor
+	source.ringpt.ringCount = amount
+end
+
 local function K_RingGainEFX(source, amount)
-
-	local st
-	local pt
-
 	if not (source.mo and source.mo.valid) then return end
 	if not (source or source.mo) then return end
 
-	
-
-	if (amount == 1)
-		st = S_BATTLEPOINT1A
-	elseif (amount == 2)
-		st = S_BATTLEPOINT2A
-	elseif (amount == 3)
-		st = S_BATTLEPOINT3A
-	elseif (amount == 4)
-		st = S_BATTLEPOINT4A
-	elseif (amount == 5)
-		st = S_BATTLEPOINT5A
-	elseif (amount == 6)
-		st = S_BATTLEPOINT6A
-	elseif (amount == 7)
-		st = S_BATTLEPOINT7A	
-	elseif (amount == 8)
-		st = S_BATTLEPOINT8A
-	elseif (amount == 9)
-		st = S_BATTLEPOINT9A
-	elseif (amount == 10)
-		st = S_BATTLEPOINT10A
-	else
-		return -- NO STATE!
+	if amount <= 0 then
+		return
 	end
+
+	amount = min(amount, 10)
+
 	if source.ringpt and source.ringpt.valid
-		P_RemoveMobj(source.ringpt)
+		-- Increase ringCount and reset state
+
+		if source.ringpt.ringCount + amount > 10 then
+			source.ringpt.target = nil
+			spawnRingPoint(source, source.ringpt.ringCount + amount - 10)
+			return
+		end
+
+		source.ringpt.ringCount = source.ringpt.ringCount + amount
+		source.ringpt.state = intToBattlePointState[source.ringpt.ringCount]
+
+		return
 	end
 
-	source.ringpt = P_SpawnMobj(source.mo.x, source.mo.y, source.mo.z, MT_RINGPOINT)
-	source.ringpt.target = source.mo
-	source.ringpt.state = st
-	source.ringpt.color = source.skincolor
-
+	spawnRingPoint(source, amount)
 end
 
 addHook("MobjThinker", function(mo)
@@ -1178,7 +1183,7 @@ addHook("TouchSpecial", function(mo, t)
 	if ((t) and (t.player))
 		local p = t.player
 		if ((p.numRings ~= nil) and (p.numRings < rings.ringcap))
-			doRingAward(p, 1)
+			doRingAward(p, 1, true)
 		end
 		p = nil
 	end
@@ -1206,7 +1211,7 @@ addHook("MobjCollide", function(tm, mo)
 					if (mo.justTouched == p) then return end -- you already touched this ring get lost!
 					
 					if (mo.removeTouchLimit <= 0)
-						doRingAward(p, 1 + (mo.extraamt and mo.extraamt or 0))
+						doRingAward(p, 1 + (mo.extraamt and mo.extraamt or 0), true)
 						mo.justTouched = p
 						mo.removeTouchLimit = cv_mrRespawnTics
 						
