@@ -300,10 +300,6 @@ local function spawnRingPoint(source, amount)
 end
 
 local function K_RingGainEFX(source, amount)
-
-	local st
-	local pt
-
 	if not (source.mo and source.mo.valid) then return end
 	if not (source or source.mo) then return end
 
