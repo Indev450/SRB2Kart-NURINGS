@@ -320,7 +320,6 @@ local function K_RingGainEFX(source, amount)
 		-- Increase ringCount and reset state
 
 		if source.ringpt.ringCount + amount > 10 then
-			source.ringpt.target = nil
 			spawnRingPoint(source, source.ringpt.ringCount + amount - 10)
 			return
 		end
@@ -355,20 +354,26 @@ addHook("MobjThinker", function(mo)
 
 	if not ringsOn return end
 	if not (mo.target and mo.target.valid) then return end
+	if not (mo.target.player and mo.target.player.valid) then return end
 	K_MatchGenericExtraFlags(mo, mo.target)
 	if (mo.target.player != thisplayer and (not splitscreen)) then mo.flags2 = $|MF2_DONTDRAW else mo.flags2 = $&(~MF2_DONTDRAW) end
 	
-	if (mo.movefactor < 48*mo.target.scale)
+	local targetHeight = min(48 * mo.target.scale, mo.target.height)
+	if mo.target.player.ringpt ~= mo then
+		targetHeight = targetHeight + 32 * mo.target.scale
+	end
+
+	if (mo.movefactor < targetHeight)
 		
-		mo.movefactor = $ + (48*mo.target.scale)/6
-			if (mo.movefactor > mo.target.height)
-				mo.movefactor = mo.target.height
+		mo.movefactor = $ + (targetHeight)/6
+			if (mo.movefactor > targetHeight)
+				mo.movefactor = targetHeight
 			end
 			
-	elseif (mo.movefactor > 48*mo.target.scale)
-		mo.movefactor =  $ - (48*mo.target.scale)/6
-			if (mo.movefactor < mo.target.height)
-				mo.movefactor = mo.target.height
+	elseif (mo.movefactor > targetHeight)
+		mo.movefactor =  $ - (targetHeight)/6
+			if (mo.movefactor < targetHeight)
+				mo.movefactor = targetHeight
 			end
 	end
 	P_MoveOrigin(mo, mo.target.x, mo.target.y, mo.target.z + (mo.target.height/2)*P_MobjFlip(mo.target) + mo.movefactor)
