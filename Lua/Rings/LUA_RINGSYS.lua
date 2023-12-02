@@ -348,11 +348,13 @@ local intToRingPointGraphicOffset = {
 }
 
 addHook("MobjThinker", function(mo)
+	if not (mo and mo.valid) then return end
+
 	mo.sprite = intToRingPointGraphicOffset[mo.ringCount].sprite
 	mo.frame = (mo.frame & ~FF_FRAMEMASK) | ringPointAnimationFrames[(#ringPointAnimationFrames - mo.tics) + 1] + intToRingPointGraphicOffset[mo.ringCount].frame
 
 	if not ringsOn return end
-	if not (mo and mo.valid and mo.target and mo.target.valid) then return end
+	if not (mo.target and mo.target.valid) then return end
 	K_MatchGenericExtraFlags(mo, mo.target)
 	if (mo.target.player != thisplayer and (not splitscreen)) then mo.flags2 = $|MF2_DONTDRAW else mo.flags2 = $&(~MF2_DONTDRAW) end
 	
