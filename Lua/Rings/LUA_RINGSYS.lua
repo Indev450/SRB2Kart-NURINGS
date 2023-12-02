@@ -1,7 +1,9 @@
 --Rings original by unknown
 --Stuff rewritten and modified by NepDisk and Indev
 
-freeslot("SPR_RNGS", "SPR_RGFD", "S_RINGSO", "S_V2RFDE", "S_USERNG", "MT_RINGSO", "MT_RINGSOMAP", "MT_RINGGET", "MT_RINGUSE","MT_RINGPOINT")
+freeslot("SPR_RNGS", "SPR_RGFD", "S_RINGSO", "S_V2RFDE", "S_USERNG", "MT_RINGSO", "MT_RINGSOMAP", "MT_RINGGET", "MT_RINGUSE","MT_RINGPOINT", "S_RINGPOINT")
+
+freeslot("SPR_HIT4","SPR_HIT5","SPR_HIT6","SPR_HIT7","SPR_HIT8","SPR_HIT9","SPR_HITX")
 
 freeslot("SPR_STSP", "S_STGSPK", "S_STGSP1", "S_STGSP2", "MT_STINGSPIKE")
 freeslot("SPR_STAL", "S_STALR1", "S_STALR2", "MT_STINGALERT")
@@ -240,7 +242,7 @@ mobjinfo[MT_STINGALERT] = {
 
 mobjinfo[MT_RINGPOINT] = {
 	doomednum = -1,
-	spawnstate = S_INVISIBLE,
+	spawnstate = S_RINGPOINT,
 	spawnhealth = 1000,
 	radius = 8*FRACUNIT,
 	height = 8*FRACUNIT,
@@ -249,6 +251,25 @@ mobjinfo[MT_RINGPOINT] = {
 	
 }
 
+-- Setup the animation frame offsets by code because i don't want to type those out.
+local ringPointAnimationFrames = {}
+local rintPointAnimationResetFrame = 8
+do
+	for _ = 1, 7 do
+		table.insert(ringPointAnimationFrames, 0)
+	end
+	table.insert(ringPointAnimationFrames, 2)
+	table.insert(ringPointAnimationFrames, 4)
+	table.insert(ringPointAnimationFrames, 3)
+	table.insert(ringPointAnimationFrames, 2)
+	table.insert(ringPointAnimationFrames, 1)
+    for _ = 1, TICRATE do
+        table.insert(ringPointAnimationFrames, 2)
+    end
+	table.insert(ringPointAnimationFrames, 5)
+	table.insert(ringPointAnimationFrames, 6)
+end
+states[S_RINGPOINT] = { SPR_UNKN, FF_FULLBRIGHT, #ringPointAnimationFrames, nil, 0, 0, S_NULL }
 
 local function rgs_generateHFForPlayer(p)
     if p and p.valid and p.mo and p.mo.valid then
@@ -278,23 +299,9 @@ hud.add(function(v, p, c)
 	thisplayer = p
 end)
 
-local intToBattlePointState = {
-	S_BATTLEPOINT1A,
-	S_BATTLEPOINT2A,
-	S_BATTLEPOINT3A,
-	S_BATTLEPOINT4A,
-	S_BATTLEPOINT5A,
-	S_BATTLEPOINT6A,
-	S_BATTLEPOINT7A,
-	S_BATTLEPOINT8A,
-	S_BATTLEPOINT9A,
-	S_BATTLEPOINT10A,
-}
-
 local function spawnRingPoint(source, amount)
 	source.ringpt = P_SpawnMobj(source.mo.x, source.mo.y, source.mo.z, MT_RINGPOINT)
 	source.ringpt.target = source.mo
-	source.ringpt.state = intToBattlePointState[amount]
 	source.ringpt.color = source.skincolor
 	source.ringpt.ringCount = amount
 end
@@ -319,7 +326,7 @@ local function K_RingGainEFX(source, amount)
 		end
 
 		source.ringpt.ringCount = source.ringpt.ringCount + amount
-		source.ringpt.state = intToBattlePointState[source.ringpt.ringCount]
+		source.ringpt.tics = max(source.ringpt.tics, states[S_RINGPOINT].tics - rintPointAnimationResetFrame)
 
 		return
 	end
@@ -327,9 +334,27 @@ local function K_RingGainEFX(source, amount)
 	spawnRingPoint(source, amount)
 end
 
+local intToRingPointGraphicOffset = {
+	{sprite=SPR_HIT1, frame=0},
+	{sprite=SPR_HIT2, frame=0},
+	{sprite=SPR_HIT3, frame=0},
+	{sprite=SPR_HIT4, frame=0},
+	{sprite=SPR_HIT5, frame=0},
+	{sprite=SPR_HIT6, frame=0},
+	{sprite=SPR_HIT7, frame=0},
+	{sprite=SPR_HIT8, frame=0},
+	{sprite=SPR_HIT9, frame=0},
+	{sprite=SPR_HITX, frame=0},
+}
+
 addHook("MobjThinker", function(mo)
+	if not (mo and mo.valid) then return end
+
+	mo.sprite = intToRingPointGraphicOffset[mo.ringCount].sprite
+	mo.frame = (mo.frame & ~FF_FRAMEMASK) | ringPointAnimationFrames[(#ringPointAnimationFrames - mo.tics) + 1] + intToRingPointGraphicOffset[mo.ringCount].frame
+
 	if not ringsOn return end
-	if not (mo and mo.valid and mo.target and mo.target.valid) then return end
+	if not (mo.target and mo.target.valid) then return end
 	K_MatchGenericExtraFlags(mo, mo.target)
 	if (mo.target.player != thisplayer and (not splitscreen)) then mo.flags2 = $|MF2_DONTDRAW else mo.flags2 = $&(~MF2_DONTDRAW) end
 	
