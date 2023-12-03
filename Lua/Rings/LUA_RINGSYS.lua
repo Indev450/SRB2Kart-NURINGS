@@ -320,6 +320,8 @@ local function K_RingGainEFX(source, amount)
 		-- Increase ringCount and reset state
 
 		if source.ringpt.ringCount + amount > 10 then
+			source.ringpt.ringCount = 10
+			source.ringpt.tics = max(source.ringpt.tics, states[S_RINGPOINT].tics - rintPointAnimationResetFrame)
 			spawnRingPoint(source, source.ringpt.ringCount + amount - 10)
 			return
 		end
