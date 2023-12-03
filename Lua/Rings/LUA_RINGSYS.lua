@@ -1,5 +1,5 @@
 --Rings original by unknown
---Stuff rewritten and modified by NepDisk and Indev
+--Stuff rewritten and modified by NepDisk, Indev and Callmore
 
 freeslot("SPR_RNGS", "SPR_RGFD", "S_RINGSO", "S_V2RFDE", "S_USERNG", "MT_RINGSO", "MT_RINGSOMAP", "MT_RINGGET", "MT_RINGUSE","MT_RINGPOINT", "S_RINGPOINT")
 
