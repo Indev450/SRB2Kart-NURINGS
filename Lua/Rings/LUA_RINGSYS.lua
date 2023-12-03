@@ -1206,13 +1206,16 @@ addHook("NetVars", function(n)
 end)
 
 addHook("TouchSpecial", function(mo, t)
-	if ((t) and (t.player))
-		local p = t.player
-		if ((p.numRings ~= nil) and (getTotalRings(p) < rings.ringcap))
-			doRingAward(p, 1, true)
-		end
-		p = nil
+	if not ((t) and (t.player)) then
+		return true
 	end
+
+	local p = t.player
+	if not ((p.numRings ~= nil) and (getTotalRings(p) < rings.ringcap)) then
+		return true
+	end
+
+	doRingAward(p, 1, true)
 end, MT_RINGSO)
 
 addHook("MobjCollide", function(tm, mo)
