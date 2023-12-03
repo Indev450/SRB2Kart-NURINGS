@@ -524,6 +524,7 @@ addHook("MobjThinker", function(mo)
 		if (p.rgSetUp ~= true)
 			p.numRings = 5 -- start the player off with 5 rings
 			p.ringsToAward = 0
+			p.activeAwardRings = 0
 			p.rgAtkDownTime = 0
 			p.rgTimedOut = 0
 			p.spillRefuseDelay = 0
@@ -663,6 +664,7 @@ addHook("MobjThinker", function(mo)
 					local awardRing = P_SpawnMobj(mo.x, mo.y, mo.z+(24*mos), MT_RINGGET)
 					awardRing.target = mo
 					p.ringsToAward = $1 - 1
+					p.activeAwardRings = p.activeAwardRings + 1
 				end
 			elseif (p.ringAwardTimer > 0)
 				p.ringAwardTimer = 0
@@ -788,6 +790,7 @@ addHook("MobjThinker", function(mo)
 			if (p.numRings < rings.ringcap)
 				p.numRings = $1 + 1
 			end
+			p.activeAwardRings = p.activeAwardRings - 1
 			p = nil
 			P_RemoveMobj(mo)
 		end
@@ -967,38 +970,29 @@ local function brg_alertVisibilityLogic(p, mo)
 	end*/
 end
 
+-- Gets the total amount of rings a player holds including rings that are currently still being added.
+rawset(_G, "getTotalRings", function (p)
+	return p.numRings + p.ringsToAward + p.activeAwardRings
+end)
+
 rawset(_G, "doRingAward", function(p, amt,disp)
-	if (p.numRings < rings.ringcap)
-		if ((p.numRings + amt) <= rings.ringcap)
-			if (ringsting.value == 0)
-				p.ringsToAward = $1 + amt
-				if disp
-					K_RingGainEFX(p,amt)
-				end
-			else
-				if (p.numRings >= 0)
-					p.ringsToAward = $1 + amt
-					if disp
-						K_RingGainEFX(p,amt)
-					end
-				else
-					p.ringsToAward = $1 + (amt*2)
-					if disp
-						K_RingGainEFX(p,amt*2)
-					end
-				end
-			end
-		else
-			p.ringsToAward = $1 + (rings.ringcap - p.numRings)
-			if disp
-				K_RingGainEFX(p,(rings.ringcap - p.numRings))
-			end
-		end
+	if p.numRings < 0 and ringsting.value == 0 then
+		amt = amt * 2
+	end
+
+	amt = min(amt, rings.ringcap - getTotalRings(p))
+
+	if amt <= 0 then return end
+
+	p.ringsToAward = p.ringsToAward + amt
+	if disp then
+		K_RingGainEFX(p, amt)
 	end
 end)
 
 addHook("PlayerSpawn", function(p)
 	p.ringsToAward = 0 // reset the rings you're getting
+	p.activeAwardRings = 0
 
 	if ((leveltime < TICRATE*6) or (not p.firstSpawn))
 		p.numRings = 5
@@ -1212,7 +1206,7 @@ end)
 addHook("TouchSpecial", function(mo, t)
 	if ((t) and (t.player))
 		local p = t.player
-		if ((p.numRings ~= nil) and (p.numRings < rings.ringcap))
+		if ((p.numRings ~= nil) and (getTotalRings(p) < rings.ringcap))
 			doRingAward(p, 1, true)
 		end
 		p = nil
@@ -1225,7 +1219,7 @@ addHook("MobjCollide", function(tm, mo)
 			if ((tm) and (tm.player))
 				local p = tm.player
 				
-				if ((p.numRings ~= nil) and (p.numRings < rings.ringcap))
+				if ((p.numRings ~= nil) and (getTotalRings(p) < rings.ringcap))
 					if (tm.momz < 0)
 						if (tm.z + tm.momz > mo.z + mo.height) then return end
 					elseif (tm.z > mo.z + mo.height) 
@@ -1339,41 +1333,14 @@ rawset(_G, "awardRingsFromObject", function(p, mo,disp)
         boxRing.fuse = 20*TICRATE
         boxRing.grabBuffer = 9
     end
-    if p.numRings < rings.ringcap then
-        local awardamount = 10
-        
-        if p.kartstuff[k_position] == 1 then
-            awardamount = 3
-        elseif not K_IsPlayerLosing(p) then
-            awardamount = 5
-        end
-    
-        if (p.numRings + awardamount) <= rings.ringcap then
-            if ringsting.value == 0 then
-                p.ringsToAward = $1 + awardamount
-				if disp
-					K_RingGainEFX(p,awardamount)
-				end
-            else
-                if (p.numRings >= 0)
-                    p.ringsToAward = $1 + awardamount
-					if disp
-						K_RingGainEFX(p,awardamount)
-					end
-                else
-                    p.ringsToAward = $1 + awardamount*2
-					if disp
-						K_RingGainEFX(p,awardamount*2)
-					end
-                end
-            end
-        else
-            p.ringsToAward = $1 + (rings.ringcap - p.numRings)
-			if disp
-				K_RingGainEFX(p,(rings.ringcap - p.numRings))
-			end
-        end
-    end
+
+	local awardamount = 10
+	if p.kartstuff[k_position] == 1 then
+		awardamount = 3
+	elseif not K_IsPlayerLosing(p) then
+		awardamount = 5
+	end
+	doRingAward(p, awardamount, disp)
 end)
 
 addHook("PlayerThink", function(p)
