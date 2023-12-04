@@ -201,6 +201,8 @@ COM_AddCommand("ring_button", function(p, bname)
     rs.button = button
     
     CONS_Printf(p, "Set ring use button to \131"..buttonnames[rs.button or BT_ATTACK])
+
+	updateRingsConfig()
 end)
 
 COM_AddCommand("ring_itemcheck", function(p, docheck)
@@ -218,8 +220,10 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
     }
     
     rs.noItemCheck = not itemCheck[docheck:lower()]
-    
+
     CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
+
+	updateRingsConfig()
 end)
 
 COM_AddCommand("ring_usedelay", function(p, dodelay)
@@ -237,8 +241,10 @@ COM_AddCommand("ring_usedelay", function(p, dodelay)
     }
     
     rs.noUseDelay = not useDelay[dodelay:lower()]
-    
+
     CONS_Printf(p, "Delay before ring use is "..(rs.noUseDelay and "\133disabled" or "\131enabled"))
+
+	updateRingsConfig()
 end)
 
 states[S_RINGSO] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 2, S_RINGSO}
