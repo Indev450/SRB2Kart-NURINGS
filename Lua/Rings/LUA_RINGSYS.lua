@@ -155,6 +155,8 @@ COM_AddCommand("ring_button", function(p, bname)
     
     p.ringButton = button
     
+	updateRingsConfig()
+
     CONS_Printf(p, "Set ring use button to \131"..buttonnames[p.ringButton or BT_ATTACK])
 end)
 
@@ -171,6 +173,8 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
     }
     
     p.ringNoItemCheck = not itemCheck[docheck:lower()]
+
+	updateRingsConfig()
     
     CONS_Printf(p, "Item check for ring use is "..(p.ringNoItemCheck and "\133disabled" or "\131enabled"))
 end)
