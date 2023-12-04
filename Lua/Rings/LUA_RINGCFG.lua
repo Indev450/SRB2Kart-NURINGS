@@ -53,3 +53,14 @@ addHook("NetVars", loadConfig)
 rawset(_G, "updateRingsConfig", function()
 	if not config_loading then saveConfig() end
 end)
+
+-- Support for config script by GenericHeroGuy
+
+-- the queue, and a helper for simplifying cvar registration
+
+rawset(_G, "CONFIG_Queue", CONFIG_Queue or {})
+
+rawset(_G, "CONFIG_RegisterVar", function(var)
+	table.insert(CONFIG_Queue, var)
+	return CV_RegisterVar(var)
+end)

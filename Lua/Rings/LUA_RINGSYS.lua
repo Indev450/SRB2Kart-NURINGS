@@ -110,23 +110,35 @@ local cv_bumploserings = CV_RegisterVar({
 }) -- Allow getting rings on maps with itemboces
 
 -- colorize sticker
-local cv_colorizeringbar = CV_RegisterVar({
+local cv_colorizeringbar = CONFIG_RegisterVar({
 	name = "ring_barcolourize",
 	defaultvalue = "Off",
 	flags = CV_SHOWMODIF,
 	possiblevalue = CV_OnOff,
+
+	config_menu = "HUD",
+	displayname = "Ring Bar Color",
+	description = "Colorize ring bar (inverted on clients that support colorized hud)",
 }) -- colorize sticker, reversed if client suppors colorized hud
 
-local cv_ringbarx = CV_RegisterVar({
+local cv_ringbarx = CONFIG_RegisterVar({
     name = "ring_barxoffset",
     defaultvalue = "0",
     flags = CV_SHOWMODIF,
+
+	config_menu = "HUD",
+	displayname = "Ring Bar X Offset",
+	description = "Horyzontal ring bar offset",
 }) -- bar x offset
 
-local cv_ringbary = CV_RegisterVar({
+local cv_ringbary = CONFIG_RegisterVar({
     name = "ring_baryoffset",
     defaultvalue = "0",
     flags = CV_SHOWMODIF,
+
+	config_menu = "HUD",
+	displayname = "Ring Bar Y Offset",
+	description = "Vertical ring bar offset",
 }) -- bar y offset
 
 local function getRingstuff(p)
