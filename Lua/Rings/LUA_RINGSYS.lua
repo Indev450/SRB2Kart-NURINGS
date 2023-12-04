@@ -788,10 +788,16 @@ addHook("MobjThinker", function(mo)
 			
 			if (not p) then P_RemoveMobj(mo) return end
 			
-			S_StartSound(mo.target,rings.grabsound)
 			if (p.numRings < rings.ringcap)
 				p.numRings = $1 + 1
 			end
+
+			S_StartSound(mo.target, rings.grabsound)
+			if p.numRings >= rings.ringcap then
+				-- Make sure to only play it for the player who just maxed their rings to avoid giving away information
+				S_StartSound(mo.target, sfx_s1c5, p)
+			end
+
 			p.activeAwardRings = p.activeAwardRings - 1
 			p = nil
 			P_RemoveMobj(mo)
