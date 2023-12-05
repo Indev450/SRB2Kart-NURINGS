@@ -98,6 +98,17 @@ local cv_allowitembox = CV_RegisterVar({
    end 
 }) -- Allow getting rings on maps with itemboces
 
+local cv_bumploserings = CV_RegisterVar({
+  name = "ringsbump",
+  defaultvalue = "Off",
+  flags = CV_NETVAR|CV_CALL,
+  PossibleValue = CV_OnOff,
+  func = function(cv)
+		local onoff = (cv.value == 0) and "\x85 Off" or "\x82 On"
+		print("\131* Losing rings on bump has been turned" .. onoff .. "\131.")
+   end
+}) -- Allow getting rings on maps with itemboces
+
 -- colorize sticker
 local cv_colorizeringbar = CV_RegisterVar({
 	name = "ring_barcolourize",
@@ -1268,7 +1279,7 @@ addHook("MobjCollide", function(tm, mo)
 					return
 				end
 				
-				if (mo.player)
+				if mo.player and cv_bumploserings.value then
 					p.v2r_bumped = mo.player
 				end
 			end
