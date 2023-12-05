@@ -505,8 +505,13 @@ local function drawRingHud(v, p)
 	end
 		
 	--Number drawing	
-	v.draw((13-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[1]), flags)
-	v.draw((19-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[2]), flags)
+	if p.numRings > 9 and p.numRings < 20 then
+		v.draw((13-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[1]), flags)
+		v.draw((19-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[2]), flags)
+	else
+		v.draw((13-(rgHudOffset+ssxoffset-1))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[1]), flags)
+		v.draw((19-(rgHudOffset+ssxoffset-1))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[2]), flags)
+	end
 				
 	--For loop to draw bars on ring meter
 	for i = 1,min(plrRings,20)
