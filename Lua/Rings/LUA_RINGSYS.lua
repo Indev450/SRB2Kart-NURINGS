@@ -897,7 +897,7 @@ addHook("MobjThinker", function(mo)
 			spbring.colorized = true
 			spbring.color = SKINCOLOR_RED
 			spbring.extraamt = 1
-            spbring.scale = 3*FRACUNIT/2
+            spbring.scale = 3*mapobjectscale/2
 			spbring.fuse = 20*TICRATE
             spbring.flags = $|MF_NOCLIPHEIGHT
 		end
