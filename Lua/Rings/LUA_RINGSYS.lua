@@ -920,23 +920,23 @@ end, MT_STINGSPIKE)
 
 local function brg_alertVisibilityLogic(p, mo)
 	if (ringsting.value == 0)
-		mo.flags = $ | MF2_DONTDRAW
+		mo.flags2 = $ | MF2_DONTDRAW
 		return
 	else
-		if (mo.flags & MF2_DONTDRAW)
-			mo.flags = ($ & ~MF2_DONTDRAW)
+		if (mo.flags2 & MF2_DONTDRAW)
+			mo.flags2 = ($ & ~MF2_DONTDRAW)
 		end
 	end
 	
 	if ((p.playerstate ~= PST_DEAD) and (p.kartstuff[k_respawn] <= 1))
 		//print((mo.flags & MF2_DONTDRAW))
 		if (p.numRings <= 0)
-			if (mo.flags & MF2_DONTDRAW)
-				mo.flags = ($ & ~MF2_DONTDRAW)
+			if (mo.flags2 & MF2_DONTDRAW)
+				mo.flags2 = ($ & ~MF2_DONTDRAW)
 			end
 		else
-			if ((mo.flags & MF2_DONTDRAW) == 0)
-				mo.flags = $ | MF2_DONTDRAW
+			if ((mo.flags2 & MF2_DONTDRAW) == 0)
+				mo.flags2 = $ | MF2_DONTDRAW
 			end
 			return
 		end
@@ -944,13 +944,13 @@ local function brg_alertVisibilityLogic(p, mo)
 	
 	if (splitscreen == 0)
 		if (p == displayplayers[0])
-			if ((mo.flags & MF2_DONTDRAW) == 0)
-				mo.flags = $ | MF2_DONTDRAW
+			if ((mo.flags2 & MF2_DONTDRAW) == 0)
+				mo.flags2 = $ | MF2_DONTDRAW
 			end
 			return
 		else
-			if (mo.flags & MF2_DONTDRAW)
-				mo.flags = ($ & ~MF2_DONTDRAW)
+			if (mo.flags2 & MF2_DONTDRAW)
+				mo.flags2 = ($ & ~MF2_DONTDRAW)
 			end
 		end
 	else
