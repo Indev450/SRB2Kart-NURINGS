@@ -612,7 +612,7 @@ addHook("MobjThinker", function(mo)
 					plrRing.momy = 9*sin((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
 					plrRing.momz = ((14+i)*P_MobjFlip(mo))*mos
 					plrRing.fuse = 20*TICRATE
-					plrRing.grabBuffer = 45
+					plrRing.grabBuffer = 7
 					p.numRings = $1 - 1
 				end
 			end
@@ -741,7 +741,7 @@ addHook("MobjThinker", function(mo)
 							plrRing.momy = 9*sin((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
 							plrRing.momz = ((14+i)*P_MobjFlip(mo))*mos
 							plrRing.fuse = 20*TICRATE
-							plrRing.grabBuffer = 45
+							plrRing.grabBuffer = 7
 							p.numRings = $1 - 1
 						end
 					else
