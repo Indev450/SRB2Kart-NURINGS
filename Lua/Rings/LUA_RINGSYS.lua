@@ -359,11 +359,20 @@ local intToRingPointGraphicOffset = {
 	{sprite=SPR_HITX, frame=0},
 }
 
+local function encoreflip(mo) end
+
+if FF_HORIZONTALFLIP then
+	encoreflip = function(mo)
+		if encoremode then mo.frame = mo.frame | FF_HORIZONTALFLIP end
+	end
+end
+
 addHook("MobjThinker", function(mo)
 	if not (mo and mo.valid) then return end
 
 	mo.sprite = intToRingPointGraphicOffset[mo.ringCount].sprite
 	mo.frame = (mo.frame & ~FF_FRAMEMASK) | ringPointAnimationFrames[(#ringPointAnimationFrames - mo.tics) + 1] + intToRingPointGraphicOffset[mo.ringCount].frame
+	encoreflip(mo)
 
 	if not ringsOn return end
 	if not (mo.target and mo.target.valid) then return end
@@ -644,9 +653,6 @@ addHook("MobjThinker", function(mo)
 			if ((bumped) and (p.numRings <= 0) and (p.rgs_bumpspin == false) and (p.rgBumpDrop == false))
 					if ((starTimer <= 1) and (growTimer == 0))
 						p.kartstuff[k_spinouttimer] = $1 + 10
-						if ((v2hitlag) and (v2hitlag.value))
-							BLHL_doHitlag(p,0,0)
-						end
 					end
 				if (hitfeed) then
 					local plr = rgs_generateHFForPlayer(p)
