@@ -128,6 +128,30 @@ local cv_ringbary = CV_RegisterVar({
     defaultvalue = "0",
     flags = CV_SHOWMODIF,
 }) -- bar y offset
+
+local function tutorialFileExists()
+	local file = io.open("ringstutorial.txt")
+	
+	if not file then return false end
+	
+	return true
+end
+
+local sawtutorial = tutorialFileExists()
+
+COM_AddCommand("ring_notutorial", function()
+	sawtutorial = true
+	
+	local file, err = io.open("ringstutorial.txt", "w")
+	
+	if file then
+		print("You won't see rings tutorial again")
+		file:write("Delete this file to re-enable rings tutorial")
+		file:close()
+	else
+		print("Failed to create ringstutorial.txt: "..err)
+	end
+end, COM_LOCAL)
  
 COM_AddCommand("ring_button", function(p, bname)
     local buttonnames = {
@@ -535,7 +559,31 @@ local function drawRingHud(v, p)
 	end
 end
 
+local starttime = 6 * TICRATE + (3 * TICRATE / 4)
+local function drawRingTutorial(v)
+	if sawtutorial or not ringsOn then return end
+	
+	local buttonnames = {
+        [BT_ATTACK] = "item",
+        [BT_CUSTOM1] = "custom 1",
+        [BT_CUSTOM2] = "custom 2",
+        [BT_CUSTOM3] = "custom 3",
+    }
 
+    local button = consoleplayer and buttonnames[consoleplayer.ringButton or BT_ATTACK] or "item"
+	
+	local buttontext = button.." button " -- :3
+	
+	if (leveltime > starttime - 3*TICRATE and leveltime < starttime + 3*TICRATE) then --tell players they can use rengs
+		v.drawString(20+20, 30, " YOU CAN USE" ,V_SNAPTOTOP|V_HUDTRANS, "left")
+		v.drawString(111+17, 30, " RINGS " ,V_SNAPTOTOP|V_YELLOWMAP|V_HUDTRANS, "left")
+		v.drawString(155+20, 30, " to speed up" ,V_SNAPTOTOP|V_HUDTRANS, "left")
+		v.drawString(20+10, 45, " HOLD ",V_SNAPTOTOP|V_HUDTRANS, "left")
+		v.drawString(20+50, 45, buttontext,V_SNAPTOTOP|V_REDMAP|V_HUDTRANS, "left")
+		v.drawString(20+50+v.stringWidth(buttontext), 45, " to use your " ,V_SNAPTOTOP|V_HUDTRANS, "left")
+		v.drawString(20+220,45, " rings! " ,V_SNAPTOTOP|V_YELLOWMAP|V_HUDTRANS, "left")
+	end
+end
 
 addHook("MobjThinker", function(mo)
 	if (ringsOn == true)
@@ -711,6 +759,7 @@ addHook("MobjThinker", function(mo)
 				local useRing = P_SpawnMobj(mo.x, mo.y, mo.z+(24*mos), MT_RINGUSE)
 				useRing.target = mo
 				p.numRings = $1 - 1
+				sawtutorial = true
 			end
 		end
 		
@@ -1432,4 +1481,5 @@ end
 addHook("MobjThinker", fuseFlash, MT_RINGSO)
 addHook("MobjThinker", fuseFlash, MT_RINGSOMAP)
 
-hud.add(drawRingHud, game)
+hud.add(drawRingHud)
+hud.add(drawRingTutorial)
