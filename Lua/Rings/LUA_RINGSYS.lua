@@ -484,6 +484,7 @@ local function drawRingHud(v, p)
 	local yellowBar = v.cachePatch("RINGB1")
 	local redBar 	= v.cachePatch("RINGB2")
 	local ringLock 	= v.cachePatch("K_NOBLNS")	
+	local maxText   = v.cachePatch("RINGTMAX")
 	
 	--Flags
 	local vflags = V_HUDTRANS
@@ -492,6 +493,10 @@ local function drawRingHud(v, p)
 	--Actually draw the hud
 	if (ringHud) then
 		v.draw((11-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value, ringHud, vflags,cmap)
+
+		if p.numRings >= rings.ringcap then
+			v.draw((11-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value+20, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value - 4, maxText, vflags)
+		end
 	end
 	
 	--Negative sign
@@ -799,10 +804,16 @@ addHook("MobjThinker", function(mo)
 			
 			if (not p) then P_RemoveMobj(mo) return end
 			
-			S_StartSound(mo.target,rings.grabsound)
 			if (p.numRings < rings.ringcap)
 				p.numRings = $1 + 1
 			end
+
+			S_StartSound(mo.target, rings.grabsound)
+			if p.numRings >= rings.ringcap then
+				-- Make sure to only play it for the player who just maxed their rings to avoid giving away information
+				S_StartSound(mo.target, sfx_s1c5, p)
+			end
+
 			p.activeAwardRings = p.activeAwardRings - 1
 			p = nil
 			P_RemoveMobj(mo)
