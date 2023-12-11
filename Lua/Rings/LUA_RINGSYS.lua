@@ -561,7 +561,7 @@ local function drawRingHud(v, p)
 	--Check for negative rings todo ringsting stuff
 	if plrRings < 0 then
 		for n = -1,max(plrRings,-20),-1
-			if sting then v.draw((28-(rgHudOffset+ssxoffset))-left + ( 2 * n * -1)+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+6+cv_ringbary.value, redBar, vflags) end
+			if sting then v.draw((29-(rgHudOffset+ssxoffset))-left + ( 2 * n * -1)+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+6+cv_ringbary.value, redBar, vflags) end
 		end
 	end
 end
