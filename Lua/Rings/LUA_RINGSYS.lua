@@ -528,7 +528,7 @@ local function drawRingHud(v, p)
 		v.draw((11-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value, ringHud, vflags,cmap)
 
 		if p.numRings >= rings.ringcap then
-			v.draw((11-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value+20, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value - 4, maxText, vflags)
+			v.draw((10-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value+20, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value - 4, maxText, vflags)
 		end
 	end
 	
@@ -542,19 +542,26 @@ local function drawRingHud(v, p)
 		v.draw((9-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff-1+cv_ringbary.value, ringLock, vflags)
 	end
 		
-	--Number drawing	
-	v.draw((13-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[1]), flags)
-	v.draw((19-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[2]), flags)
+	--Number drawing
+	local numoffset = 0
+	if (p.numRings > 9 and p.numRings < 20) or (p.numRings < -9) then
+		numoffset = 1
+	else
+		numoffset = 0
+    end
+	
+	v.draw((13-(rgHudOffset+numoffset+ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[1]), flags)
+	v.draw((19-(rgHudOffset+numoffset-ssxoffset))-left+cv_ringbarx.value, (spRgHudYOff+ssyoffset+6)+windiff+cv_ringbary.value, v.cachePatch(font.."0"..nums[2]), flags)
 				
 	--For loop to draw bars on ring meter
 	for i = 1,min(plrRings,20)
-		v.draw((30-(rgHudOffset+ssxoffset))-left + ( 2 * i)+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+6+cv_ringbary.value, yellowBar, vflags)
+		v.draw((29-(rgHudOffset+ssxoffset))-left + ( 2 * i)+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+6+cv_ringbary.value, yellowBar, vflags)
 	end
 	
 	--Check for negative rings todo ringsting stuff
 	if plrRings < 0 then
 		for n = -1,max(plrRings,-20),-1
-			if sting then v.draw((30-(rgHudOffset+ssxoffset))-left + ( 2 * n * -1)+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+6+cv_ringbary.value, redBar, vflags) end
+			if sting then v.draw((28-(rgHudOffset+ssxoffset))-left + ( 2 * n * -1)+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+6+cv_ringbary.value, redBar, vflags) end
 		end
 	end
 end
