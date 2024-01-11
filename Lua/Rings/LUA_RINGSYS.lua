@@ -625,7 +625,6 @@ addHook("MobjThinker", function(mo)
 			rs.activeAwardRings = 0
 			rs.atkDownTime = 0
 			rs.timedOut = 0
-			rs.spillRefuseDelay = 0
 			rs.bumpspin = false
 			rs.spill = false
 			rs.speedFactor = 0
@@ -784,64 +783,8 @@ addHook("MobjThinker", function(mo)
 			end
 		end
 		
-		if ((spinTimer == 0) and (flatTimer == 0))
-			rs.spill = false
-			if (rs.spillRefuseDelay > 0)
-				rs.spillRefuseDelay = $1 - 1
-			else
-				rs.nospill = false
-			end
-		else
-			if (rs.spill ~= true)
-				local mos = mapobjectscale
-				local numRingsDrop = 1
-				local ringSpillAng = 0
-				
-				if (rs.numRings > 5)
-					numRingsDrop = 5
-				elseif (rs.numRings > 0)
-					numRingsDrop = rs.numRings
-				end
-				
-				ringSpillAng = (45/numRingsDrop)
-				
-				local ringSpawnAng = (ringSpillAng*numRingsDrop)
-				
-				local stungAmount = 5
-				
-				if rs.bumpspin then
-					stungAmount = 1
-				end
-				
-				if (rs.nospill ~= true)
-					if (rs.numRings > 0)
-						S_StartSound(mo,rings.spillsound)
-						for i = 1, numRingsDrop
-							local plrRing = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_RINGSO)
-							plrRing.momx = 9*cos((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
-							plrRing.momy = 9*sin((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
-							plrRing.momz = ((14+i)*P_MobjFlip(mo))*mos
-							plrRing.fuse = 20*TICRATE
-							plrRing.grabBuffer = 7
-							rs.numRings = $1 - 1
-						end
-					else
-						if (ringsting.value == 1)
-							for i = 1, stungAmount
-								local plrSpike = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_STINGSPIKE)
-								plrSpike.momx = 9*cos((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
-								plrSpike.momy = 9*sin((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
-								plrSpike.momz = (9*sin(((90*ANG1)-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1)))*P_MobjFlip(mo)
-								plrSpike.fuse = 26
-							end
-							rs.numRings = $1 - stungAmount
-							S_StartSound(mo,rings.stingsound)
-						end
-					end
-				end
-				
-				rs.spill = true
-			end
+		if spinTimer == 0 and flatTimer == 0 then
+			rs.spill = false -- Can take damage again
 		end
 	end
 end, MT_PLAYER)
@@ -1097,6 +1040,55 @@ rawset(_G, "doRingAward", function(p, amt,disp)
 	rs.ringsToAward = rs.ringsToAward + amt
 	if disp then
 		K_RingGainEFX(p, amt)
+	end
+end)
+
+-- Spill players rings. If amount is -1, this will forcefully drop all rings player has
+rawset(_G, "doRingSpill", function(p, amount)
+	local rs = getRingstuff(p)
+	local mo = p.mo
+
+	if not rs.spill then
+		local mos = mapobjectscale
+		local numRingsDrop = (ringsting.value == 1) and amount or min(amount, rs.numRings)
+		local ringSpillAng = 0
+
+		if amount == -1 then numRingsDrop = max(rs.numRings, 0) end
+
+		ringSpillAng = (45/numRingsDrop)
+
+		local ringSpawnAng = (ringSpillAng*numRingsDrop)
+
+		local stungAmount = amount
+
+		if rs.bumpspin then
+			stungAmount = 1
+		end
+
+		if rs.numRings > 0 then
+			S_StartSound(mo, rings.spillsound)
+			for i = 1, numRingsDrop do
+				local plrRing = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_RINGSO)
+				plrRing.momx = 9*cos((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
+				plrRing.momy = 9*sin((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
+				plrRing.momz = ((14+i)*P_MobjFlip(mo))*mos
+				plrRing.fuse = 20*TICRATE
+				plrRing.grabBuffer = 7
+			end
+			rs.numRings = $1 - numRingsDrop
+		elseif ringsting.value == 1 then
+			for i = 1, stungAmount do
+				local plrSpike = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_STINGSPIKE)
+				plrSpike.momx = 9*cos((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
+				plrSpike.momy = 9*sin((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
+				plrSpike.momz = (9*sin(((90*ANG1)-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1)))*P_MobjFlip(mo)
+				plrSpike.fuse = 26
+			end
+			rs.numRings = $1 - stungAmount
+			S_StartSound(mo,rings.stingsound)
+		end
+
+		rs.spill = true
 	end
 end)
 
@@ -1468,33 +1460,82 @@ addHook("PlayerThink", function(p)
     p.lastitemroulette = p.kartstuff[k_itemroulette]
 end)
 
---[[
-addHook("MobjDeath", function(mo, i, src)
-	if ((ringsOn == true)
-	if mapRingsPresent and cv_allowitembox.value == 0 then return end
-		if (mo and mo.valid and (mo.type == MT_RANDOMITEM) and i and (i.valid) and (i == src) and (i.health) and i.player)
-			local p = i.player
-			
-            awardRingsFromObject(p, mo)
+addHook("PlayerSpin", function(p, inflictor)
+	if not ringsOn then return end
+
+	local amount
+
+    local SPIN_AMOUNT = {
+        [MT_BANANA] = 3,
+        [MT_BANANA_SHIELD] = 3,
+        [MT_ORBINAUT] = 5,
+        [MT_ORBINAUT_SHIELD] = 5,
+        [MT_JAWZ] = 5,
+        [MT_JAWZ_DUD] = 5,
+        [MT_JAWZ_SHIELD] = 5,
+        [MT_BALLHOG] = 3,
+        [MT_SPB] = 3,
+        [MT_SPBEXPLOSION] = 5,
+        [MT_MINEEXPLOSION] = 5,
+        [MT_SSMINE] = 5,
+        [MT_SSMINE_SHIELD] = 5,
+    }
+
+	if inflictor then
+		if inflictor.type == MT_BANANA and inflictor.health > 1 then
+			amount = 10
+		elseif inflictor.type == MT_SPBEXPLOSION and not inflictor.extavalue1 then
+			amount = 3
+		elseif SPIN_AMOUNT[inflictor.type] then
+			amount = SPIN_AMOUNT[inflictor.type]
+		else
+			if inflictor.player then
+				if inflictor.player.kartstuff[k_invincibilitytimer] then
+					amount = 5
+				elseif inflictor.player.kartstuff[k_curshield] == 1 then
+					amount = 3
+				end
+			else
+				amount = 3
+			end
 		end
+	else
+		amount = 3
 	end
+
+	doRingSpill(p, amount)
 end)
 
-addHook("TouchSpecial", function(mo, pmo)
-    if ringsOn and pmo.player and P_CanPickupItem(pmo.player, 1) then
-		if mapRingsPresent and cv_allowitembox.value == 0 then return end
-        -- Declare here because some of things (like MT_RANDOMITEMBOX) may not exist at script load yet
-        local AWARDRINGMOBJS = {
-            [MT_CDUFO] = true,
-            [dynamicitems_initialized and MT_RANDOMITEMBOX or -1] = true,
-        }
-    
-        if mo and mo.valid and AWARDRINGMOBJS[mo.type] then
-            awardRingsFromObject(pmo.player, mo)
-        end
-    end
+addHook("PlayerExplode", function(p, inflictor)
+	if not ringsOn then return end
+	if not inflictor then return end
+
+	-- Mines and SPBs explosions
+	local amount = 10
+
+    if inflictor.type == MT_SPBEXPLOSION and not inflictor.extravalue1 then
+        amount = 5 -- Eggman monitor explision
+	end
+
+	doRingSpill(p, amount)
 end)
---]]
+
+addHook("PlayerSquish", function(p, inflictor)
+	if not ringsOn then return end
+	if not inflictor then return end
+
+    doRingSpill(p, inflictor and 5 or 3)
+end)
+
+addHook("MobjDamage", function(victim_mo, inflictor)
+	if not ringsOn then return end
+	if not (inflictor and victim_mo.player) then return end
+
+    if inflictor.type == MT_SINK then
+		doRingSpill(victim_mo.player, -1)
+    end
+end, MT_PLAYER)
+
 
 local function fuseFlash(mo)
     if not (mo and mo.valid) then return end
