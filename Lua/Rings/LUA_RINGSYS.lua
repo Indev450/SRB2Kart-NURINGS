@@ -1077,6 +1077,8 @@ rawset(_G, "doRingSpill", function(p, amount)
 
 		if amount == -1 then numRingsDrop = max(rs.numRings, 0) end
 
+		if numRingsDrop == 0 then return end
+
 		ringSpillAng = (45/numRingsDrop)
 
 		local ringSpawnAng = (ringSpillAng*numRingsDrop)
