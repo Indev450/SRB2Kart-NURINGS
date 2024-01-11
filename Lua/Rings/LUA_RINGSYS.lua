@@ -129,6 +129,14 @@ local cv_ringbary = CV_RegisterVar({
     flags = CV_SHOWMODIF,
 }) -- bar y offset
 
+local function getRingstuff(p)
+	if not p.ringstuff then
+		p.ringstuff = {}
+	end
+
+	return p.ringstuff
+end
+
 local function tutorialFileExists()
 	local file = io.open("ringstutorial.txt")
 	
@@ -154,6 +162,8 @@ COM_AddCommand("ring_notutorial", function()
 end, COM_LOCAL)
  
 COM_AddCommand("ring_button", function(p, bname)
+	local rs = getRingstuff(p)
+
     local buttonnames = {
         [BT_ATTACK] = "item",
         [BT_CUSTOM1] = "custom 1",
@@ -162,7 +172,7 @@ COM_AddCommand("ring_button", function(p, bname)
     }
 
     if not bname then
-        local button = buttonnames[p.ringButton or BT_ATTACK]
+        local button = buttonnames[rs.button or BT_ATTACK]
         
         CONS_Printf(p, "Ring use button: \131"..button.."\n")
         CONS_Printf(p, "Usage: ring_button <button name>")
@@ -188,14 +198,16 @@ COM_AddCommand("ring_button", function(p, bname)
         return
     end
     
-    p.ringButton = button
+    rs.button = button
     
-    CONS_Printf(p, "Set ring use button to \131"..buttonnames[p.ringButton or BT_ATTACK])
+    CONS_Printf(p, "Set ring use button to \131"..buttonnames[rs.button or BT_ATTACK])
 end)
 
 COM_AddCommand("ring_itemcheck", function(p, docheck)
+	local rs = getRingstuff(p)
+
     if not docheck then
-        CONS_Printf(p, "Item check for ring use is "..(p.ringNoItemCheck and "\133disabled" or "\131enabled"))
+        CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
         return
     end
 
@@ -205,9 +217,9 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
         on = true,
     }
     
-    p.ringNoItemCheck = not itemCheck[docheck:lower()]
+    rs.noItemCheck = not itemCheck[docheck:lower()]
     
-    CONS_Printf(p, "Item check for ring use is "..(p.ringNoItemCheck and "\133disabled" or "\131enabled"))
+    CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
 end)
 
 states[S_RINGSO] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 2, S_RINGSO}
@@ -432,7 +444,9 @@ local function drawRingHud(v, p)
 	--Checks
 	if not ringsOn return end
 	if not (p.mo and p.mo.valid) then return end
-	
+
+	local rs = getRingstuff(p)
+
 	-- cache cvars
 	if cv_colorizedhud == nil then
 		cv_colorizedhud = CV_FindVar("colorizedhud")
@@ -459,7 +473,7 @@ local function drawRingHud(v, p)
 	local spRgHudYOff = 172
 	local f = 0
 	
-	local plrRings = p.numRings
+	local plrRings = rs.numRings
 	
 	local scrwidth 	= v.width()/v.dupx()
 	local winheight = v.height()/v.dupy()
@@ -527,7 +541,7 @@ local function drawRingHud(v, p)
 	if (ringHud) then
 		v.draw((11-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value, ringHud, vflags,cmap)
 
-		if p.numRings >= rings.ringcap then
+		if rs.numRings >= rings.ringcap then
 			v.draw((10-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value+20, spRgHudYOff+ssyoffset+windiff+cv_ringbary.value - 4, maxText, vflags)
 		end
 	end
@@ -538,13 +552,13 @@ local function drawRingHud(v, p)
 	end
 	
 	--If you have an spb on your tail or use too many rings show that your rings are locked.
-	if (p.rgUsed and p.rgUsed > rings.ringusecap) then
+	if (rs.ringsUsed and rs.ringsUsed > rings.ringusecap) then
 		v.draw((9-(rgHudOffset+ssxoffset))-left+cv_ringbarx.value, spRgHudYOff+ssyoffset+windiff-1+cv_ringbary.value, ringLock, vflags)
 	end
 		
 	--Number drawing
 	local numoffset = 0
-	if (p.numRings > 9 and p.numRings < 20) or (p.numRings < -9) then
+	if (rs.numRings > 9 and rs.numRings < 20) or (rs.numRings < -9) then
 		numoffset = 1
 	else
 		numoffset = 0
@@ -577,7 +591,7 @@ local function drawRingTutorial(v)
         [BT_CUSTOM3] = "custom 3",
     }
 
-    local button = consoleplayer and buttonnames[consoleplayer.ringButton or BT_ATTACK] or "item"
+    local button = consoleplayer and buttonnames[consoleplayer.button or BT_ATTACK] or "item"
 	
 	local buttontext = button.." button " -- :3
 	
@@ -600,24 +614,26 @@ addHook("MobjThinker", function(mo)
 		local flatTimer = p.kartstuff[k_squishedtimer]
 		local spawnTimer = p.kartstuff[k_respawn]
 		local bumped = p.kartstuff[k_justbumped]
+
+		local rs = getRingstuff(p)
 		
 		local dontBoost = ((not P_IsObjectOnGround(mo)) or p.kartstuff[k_rocketsneakertimer])
 		
-		if (p.rgSetUp ~= true)
-			p.numRings = 5 -- start the player off with 5 rings
-			p.ringsToAward = 0
-			p.activeAwardRings = 0
-			p.rgAtkDownTime = 0
-			p.rgTimedOut = 0
-			p.spillRefuseDelay = 0
-			p.rgs_bumpspin = false
-			p.ringSpill = false
-			p.rgSpeedFactor = 0
-			p.rgTimedOut = 0 -- player runs out of "ring juice"
-			p.rgUsed = 0 -- can't use any more than 10 rings
-			p.ringAwardTimer = 0 -- increment when you have rings being awarded
-			p.ringBoost = 0
-			p.rgSetUp = true
+		if not rs.init then
+			rs.numRings = 5 -- start the player off with 5 rings
+			rs.ringsToAward = 0
+			rs.activeAwardRings = 0
+			rs.atkDownTime = 0
+			rs.timedOut = 0
+			rs.spillRefuseDelay = 0
+			rs.bumpspin = false
+			rs.spill = false
+			rs.speedFactor = 0
+			rs.timedOut = 0 -- player runs out of "ring juice"
+			rs.ringsUsed = 0 -- can't use any more than 10 rings
+			rs.awardTimer = 0 -- increment when you have rings being awarded
+			rs.boost = 0
+			rs.init = true
 		end
 		
 		if (mo.justSpawnedBuffer == nil)
@@ -632,17 +648,17 @@ addHook("MobjThinker", function(mo)
 			mo.justSpawnedBuffer = 5
 		end
 		
-		if ((p.stingAlertMobj == nil) and (spawnTimer <= 1) and (mo.justSpawnedBuffer <= 0))
-			p.stingAlertMobj = P_SpawnMobj(mo.x,mo.y,mo.z+mo.height,MT_STINGALERT) -- "!" icon for when you have 0- rings with ring sting on
-			p.stingAlertMobj.target = mo
+		if ((rs.stingAlertMobj == nil) and (spawnTimer <= 1) and (mo.justSpawnedBuffer <= 0))
+			rs.stingAlertMobj = P_SpawnMobj(mo.x,mo.y,mo.z+mo.height,MT_STINGALERT) -- "!" icon for when you have 0- rings with ring sting on
+			rs.stingAlertMobj.target = mo
 		end
 		
-		if ((ringsting.value == 0) and (p.numRings < 0))
-			p.numRings = 0 -- reset to 0
+		if ((ringsting.value == 0) and (rs.numRings < 0))
+			rs.numRings = 0 -- reset to 0
 		end
 		
-		if (p.ringBoost)
-			p.ringBoost = ($ - 1)
+		if (rs.boost)
+			rs.boost = ($ - 1)
 			p.kartstuff[k_offroad] = 0
 		end
 		
@@ -651,21 +667,21 @@ addHook("MobjThinker", function(mo)
 		
 		local inInvinc = (starTimer or growTimer)
 		
-		if (p.ringFlash)
-			p.ringFlash = ($ - 1)
+		if (rs.flash)
+			rs.flash = ($ - 1)
 			
-			if ((p.ringFlash > 0) and (not inInvinc) ) //stars and growth already colorize you
-				mo.colorized = ((p.ringFlash % 2 == 0) and true or false)
+			if ((rs.flash > 0) and (not inInvinc) ) //stars and growth already colorize you
+				mo.colorized = ((rs.flash % 2 == 0) and true or false)
 			end
 			
-			if ((p.ringFlash == 1) and (not inInvinc))
+			if ((rs.flash == 1) and (not inInvinc))
 				mo.colorized = false // un-colorize yourself
 			end
 		end
 		
 		
 		
-		if ((bumped) and (starTimer <= 1) and (growTimer == 0) and (p.rgBumpDrop ~= true) and (p.numRings > 0) and (p.v2r_bumped))
+		if ((bumped) and (starTimer <= 1) and (growTimer == 0) and (rs.rgBumpDrop ~= true) and (rs.numRings > 0) and (rs.bumped))
 			local mos = mapobjectscale
 			local bumpRings = ((p.speed/mos)/20)
 			
@@ -674,7 +690,7 @@ addHook("MobjThinker", function(mo)
 			local ringSpillAng = (45/bumpRings)
 				
 			local ringSpawnAng = (ringSpillAng*bumpRings)
-			if (p.numRings > 0)
+			if (rs.numRings > 0)
 				for i = 1, bumpRings
 					local plrRing = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_RINGSO)
 					plrRing.momx = 9*cos((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
@@ -682,45 +698,43 @@ addHook("MobjThinker", function(mo)
 					plrRing.momz = ((14+i)*P_MobjFlip(mo))*mos
 					plrRing.fuse = 20*TICRATE
 					plrRing.grabBuffer = 7
-					p.numRings = $1 - 1
+					rs.numRings = $1 - 1
 				end
 			end
 			mos = nil
 			ringSpillAng = nil
 			ringSpawnAng = nil
 			bumpRings = nil
-			p.rgBumpDrop = true
+			rs.rgBumpDrop = true
 		end
 		
-		if (not bumped)
-			p.rgBumpDrop = false
-			p.v2r_bumped = nil
+		if not bumped then
+			rs.rgBumpDrop = false
+			rs.bumped = nil
 		end
 		
-		if ((ringsting.value == 1))
+		if ((ringsting.value == 1)) then
 			
-			if (p.numRings < -10)
-				p.numRings = -10
+			if (rs.numRings < -10) then
+				rs.numRings = -10
 			end
 			
-			
-			
-			if ((bumped) and (p.numRings <= 0) and (p.rgs_bumpspin == false) and (p.rgBumpDrop == false))
-					if ((starTimer <= 1) and (growTimer == 0))
-						p.kartstuff[k_spinouttimer] = $1 + 10
-					end
+			if bumped and rs.numRings <= 0 and not rs.bumpspin and not rs.rgBumpDrop == false then
+				if ((starTimer <= 1) and (growTimer == 0)) then
+					p.kartstuff[k_spinouttimer] = $1 + 10
+				end
 				if (hitfeed) then
 					local plr = rgs_generateHFForPlayer(p)
 					HF_SendHitMessage(nil, plr, "HFRSTNG")
 					plr = nil
 				end
 				
-				p.rgs_bumpspin = true
+				rs.bumpspin = true
 			end
 			
 			
-			if ((p.rgs_bumpspin == true) and (spinTimer <= 0))
-				p.rgs_bumpspin = false
+			if ((rs.bumpspin == true) and (spinTimer <= 0))
+				rs.bumpspin = false
 			end
 		end
 		
@@ -728,65 +742,65 @@ addHook("MobjThinker", function(mo)
 		growTimer = nil
 		
 		if (dfBoost == 0)
-			p.rgSpeedFactor = 0
-			p.rgUsed = 0
-			if (p.rgTimedOut < 18)
-				p.rgTimedOut = $1 + 1
+			rs.speedFactor = 0
+			rs.ringsUsed = 0
+			if (rs.timedOut < 18)
+				rs.timedOut = $1 + 1
 			end
 		end
 		
-		if (p.ringsToAward ~= nil)
-			if (p.ringsToAward > 0)
-				p.ringAwardTimer = $1 + 1
-				if ((p.ringAwardTimer % 4) == 0)
+		if (rs.ringsToAward ~= nil)
+			if (rs.ringsToAward > 0)
+				rs.awardTimer = $1 + 1
+				if ((rs.awardTimer % 4) == 0)
 					local mos = mapobjectscale
 					local awardRing = P_SpawnMobj(mo.x, mo.y, mo.z+(24*mos), MT_RINGGET)
 					awardRing.target = mo
-					p.ringsToAward = $1 - 1
-					p.activeAwardRings = p.activeAwardRings + 1
+					rs.ringsToAward = $1 - 1
+					rs.activeAwardRings = rs.activeAwardRings + 1
 				end
-			elseif (p.ringAwardTimer > 0)
-				p.ringAwardTimer = 0
+			elseif (rs.awardTimer > 0)
+				rs.awardTimer = 0
 			end
 		end
         
-        local BT_USERING = p.ringButton or BT_ATTACK
-        local itemCheck = p.ringNoItemCheck or BT_USERING ~= BT_ATTACK or (p.kartstuff[k_itemroulette] == 0) and (p.kartstuff[k_itemamount] <= 0)
+        local BT_USERING = rs.button or BT_ATTACK
+        local itemCheck = rs.noItemCheck or BT_USERING ~= BT_ATTACK or (p.kartstuff[k_itemroulette] == 0) and (p.kartstuff[k_itemamount] <= 0)
         local spinCheck = P_PlayerInPain(p) or p.kartstuff[k_spinouttimer] or p.kartstuff[k_wipeoutslow]
         
 		if ((p.cmd.buttons & BT_USERING) and not (p.kartstuff[k_growshrinktimer] > 0))
-			p.rgAtkDownTime = $1 + 1
+			rs.atkDownTime = $1 + 1
 		else
-			p.rgAtkDownTime = -10 -- preventing instant use after using an item
+			rs.atkDownTime = -10 -- preventing instant use after using an item
 		end
         
-		if ((p.cmd.buttons & BT_USERING) and itemCheck and (not spinCheck) and (((p.rgAtkDownTime % 4) == 0))  and (p.rgAtkDownTime >= 0) and (leveltime >= 268))
+		if ((p.cmd.buttons & BT_USERING) and itemCheck and (not spinCheck) and (((rs.atkDownTime % 4) == 0))  and (rs.atkDownTime >= 0) and (leveltime >= 268))
 			local mos = mapobjectscale
-			if ((p.numRings > 0) and (not dontBoost) and (p.rgUsed <= rings.ringusecap))
+			if ((rs.numRings > 0) and (not dontBoost) and (rs.ringsUsed <= rings.ringusecap))
 				local useRing = P_SpawnMobj(mo.x, mo.y, mo.z+(24*mos), MT_RINGUSE)
 				useRing.target = mo
-				p.numRings = $1 - 1
+				rs.numRings = $1 - 1
 				sawtutorial = true
 			end
 		end
 		
 		if ((spinTimer == 0) and (flatTimer == 0))
-			p.ringSpill = false
-			if (p.spillRefuseDelay > 0)
-				p.spillRefuseDelay = $1 - 1
+			rs.spill = false
+			if (rs.spillRefuseDelay > 0)
+				rs.spillRefuseDelay = $1 - 1
 			else
-				p.nospill = false
+				rs.nospill = false
 			end
 		else
-			if (p.ringSpill ~= true)
+			if (rs.spill ~= true)
 				local mos = mapobjectscale
 				local numRingsDrop = 1
 				local ringSpillAng = 0
 				
-				if (p.numRings > 5)
+				if (rs.numRings > 5)
 					numRingsDrop = 5
-				elseif (p.numRings > 0)
-					numRingsDrop = p.numRings
+				elseif (rs.numRings > 0)
+					numRingsDrop = rs.numRings
 				end
 				
 				ringSpillAng = (45/numRingsDrop)
@@ -795,12 +809,12 @@ addHook("MobjThinker", function(mo)
 				
 				local stungAmount = 5
 				
-				if (p.rgs_bumpspin == true)
+				if rs.bumpspin then
 					stungAmount = 1
 				end
 				
-				if (p.nospill ~= true)
-					if (p.numRings > 0)
+				if (rs.nospill ~= true)
+					if (rs.numRings > 0)
 						S_StartSound(mo,rings.spillsound)
 						for i = 1, numRingsDrop
 							local plrRing = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_RINGSO)
@@ -809,7 +823,7 @@ addHook("MobjThinker", function(mo)
 							plrRing.momz = ((14+i)*P_MobjFlip(mo))*mos
 							plrRing.fuse = 20*TICRATE
 							plrRing.grabBuffer = 7
-							p.numRings = $1 - 1
+							rs.numRings = $1 - 1
 						end
 					else
 						if (ringsting.value == 1)
@@ -820,13 +834,13 @@ addHook("MobjThinker", function(mo)
 								plrSpike.momz = (9*sin(((90*ANG1)-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1)))*P_MobjFlip(mo)
 								plrSpike.fuse = 26
 							end
-							p.numRings = $1 - stungAmount
+							rs.numRings = $1 - stungAmount
 							S_StartSound(mo,rings.stingsound)
 						end
 					end
 				end
 				
-				p.ringSpill = true
+				rs.spill = true
 			end
 		end
 	end
@@ -863,20 +877,22 @@ addHook("MobjThinker", function(mo)
 		end
 		if (mo.distFromTarget <= (16*mos))
 			local p = ((mo.target) and mo.target.player or nil)
-			
+
 			if (not p) then P_RemoveMobj(mo) return end
-			
-			if (p.numRings < rings.ringcap)
-				p.numRings = $1 + 1
+
+			local rs = getRingstuff(p)
+
+			if (rs.numRings < rings.ringcap)
+				rs.numRings = $1 + 1
 			end
 
 			S_StartSound(mo.target, rings.grabsound)
-			if p.numRings >= rings.ringcap then
+			if rs.numRings >= rings.ringcap then
 				-- Make sure to only play it for the player who just maxed their rings to avoid giving away information
 				S_StartSound(mo.target, sfx_s1c5, p)
 			end
 
-			p.activeAwardRings = p.activeAwardRings - 1
+			rs.activeAwardRings = rs.activeAwardRings - 1
 			p = nil
 			P_RemoveMobj(mo)
 		end
@@ -900,24 +916,26 @@ addHook("MobjThinker", function(mo)
 		end
 		if (mo.rgZOffDir >= 180)
 			local p = mo.target.player
+
+			local rs = getRingstuff(p)
+
 			S_StartSound(mo.target,rings.usesound)
 			
-			if (p.strongermt and (p.rgUsed < 5))
-				p.strongermt = false
+			if (rs.strongermt and (rs.ringsUsed < 5))
+				rs.strongermt = false
 			end
 			
 			P_SpawnRingSparkle(mo.target)
 			
-			if (p.rgSpeedFactor < 3)
-				p.rgSpeedFactor = $1 + 1
+			if (rs.speedFactor < 3)
+				rs.speedFactor = $1 + 1
 			end
-			p.rgTimedOut = 0
+			rs.timedOut = 0
 			p.kartstuff[k_startboost] = $1 + 10
-			p.ringBoost = $1 + 10
-			p.ringFlash = 10
-			p.rgUsed = $1 + 1
+			rs.boost = $1 + 10
+			rs.flash = 10
+			rs.ringsUsed = $1 + 1
 			
-			p = nil
 			P_RemoveMobj(mo)
 		end
 	end
@@ -992,6 +1010,8 @@ addHook("MobjThinker", function(mo)
 end, MT_STINGSPIKE)
 
 local function brg_alertVisibilityLogic(p, mo)
+	local rs = getRingstuff(p)
+
 	if (ringsting.value == 0)
 		mo.flags2 = $ | MF2_DONTDRAW
 		return
@@ -1003,7 +1023,7 @@ local function brg_alertVisibilityLogic(p, mo)
 	
 	if ((p.playerstate ~= PST_DEAD) and (p.kartstuff[k_respawn] <= 1))
 		//print((mo.flags & MF2_DONTDRAW))
-		if (p.numRings <= 0)
+		if (rs.numRings <= 0)
 			if (mo.flags2 & MF2_DONTDRAW)
 				mo.flags2 = ($ & ~MF2_DONTDRAW)
 			end
@@ -1058,11 +1078,15 @@ end
 
 -- Gets the total amount of rings a player holds including rings that are currently still being added.
 rawset(_G, "getTotalRings", function (p)
-	return p.numRings + p.ringsToAward + p.activeAwardRings
+	local rs = getRingstuff(p)
+
+	return rs.numRings + rs.ringsToAward + rs.activeAwardRings
 end)
 
 rawset(_G, "doRingAward", function(p, amt,disp)
-	if p.numRings < 0 and ringsting.value == 0 then
+	local rs = getRingstuff(p)
+
+	if rs.numRings < 0 and ringsting.value == 0 then
 		amt = amt * 2
 	end
 
@@ -1070,19 +1094,21 @@ rawset(_G, "doRingAward", function(p, amt,disp)
 
 	if amt <= 0 then return end
 
-	p.ringsToAward = p.ringsToAward + amt
+	rs.ringsToAward = rs.ringsToAward + amt
 	if disp then
 		K_RingGainEFX(p, amt)
 	end
 end)
 
 addHook("PlayerSpawn", function(p)
-	p.ringsToAward = 0 // reset the rings you're getting
-	p.activeAwardRings = 0
+	local rs = getRingstuff(p)
 
-	if ((leveltime < TICRATE*6) or (not p.firstSpawn))
-		p.numRings = 5
-		p.firstSpawn = true
+	rs.ringsToAward = 0 -- reset the rings you're getting
+	rs.activeAwardRings = 0
+
+	if ((leveltime < TICRATE*6) or (not rs.firstSpawn)) then
+		rs.numRings = 5
+		rs.firstSpawn = true
 	end
 end)
 
@@ -1124,7 +1150,7 @@ addHook("MobjThinker", function(mo)
 end, MT_STINGALERT)
 
 local function setRingSounds(mapnum)
-	// why can't S_sfx use freeslots, WHY
+	-- why can't S_sfx use freeslots, WHY
 	rings.grabsound = sfx_s227
 	rings.usesound = sfx_s1ce
 	rings.spillsound = sfx_s1c6
@@ -1247,36 +1273,29 @@ addHook("MapLoad", function()
 				end
 			end
 		end
-		for p in players.iterate
-			if ((p.mo) and (p.mo.valid))
-				//local actor = p.mo // too lazy to not make a macro
-				//local testing = P_SpawnMobj(actor.x, actor.y, actor.z, MT_RINGSO)
-				p.numRings = 5
-				p.stingAlertMobj = nil
-			end
+		for p in players.iterate do
+			local rs = getRingstuff(p)
+
+			rs.numRings = 5
+			rs.stingAlertMobj = nil
 		end
 		
 		--map ring setup
 		for mo in thinkers.iterate("mobj") do
 			if not mo or not mo.valid continue end
-			
-			
-			if (mapheaderinfo[gamemap].hasrings == "true")
-				if (mo.type == MT_SUPERRINGBOX)
+
+			if (mapheaderinfo[gamemap].hasrings == "true") then
+				if (mo.type == MT_SUPERRINGBOX) then
 					local replaceRing = P_SpawnMobj(mo.x, mo.y, mo.z, MT_RINGSOMAP)
 					mapRingsPresent = true
 					replaceRing.ismapring = true
 					P_RemoveMobj(mo)
 				end
-				
-				
 			end
 		end
 	else
-		for p in players.iterate
-			if ((p.mo) and (p.mo.valid))
-				p.numRings = nil
-			end
+		for p in players.iterate do
+			getRingstuff(p).numRings = nil
 		end
 	end
 end)
@@ -1295,7 +1314,10 @@ addHook("TouchSpecial", function(mo, t)
 	end
 
 	local p = t.player
-	if not ((p.numRings ~= nil) and (getTotalRings(p) < rings.ringcap)) then
+
+	local rs = getRingstuff(p)
+
+	if not ((rs.numRings ~= nil) and (getTotalRings(p) < rings.ringcap)) then
 		return true
 	end
 
@@ -1304,31 +1326,32 @@ end, MT_RINGSO)
 
 addHook("MobjCollide", function(tm, mo)
 	if mo and mo.valid then
-		if (mo.type == MT_RINGSOMAP)
-			if ((tm) and (tm.player))
+		if (mo.type == MT_RINGSOMAP) then
+			if ((tm) and (tm.player)) then
 				local p = tm.player
+				local rs = getRingstuff(p)
 				
-				if ((p.numRings ~= nil) and (getTotalRings(p) < rings.ringcap))
-					if (tm.momz < 0)
+				if ((rs.numRings ~= nil) and (getTotalRings(p) < rings.ringcap)) then
+					if (tm.momz < 0) then
 						if (tm.z + tm.momz > mo.z + mo.height) then return end
-					elseif (tm.z > mo.z + mo.height) 
+					elseif (tm.z > mo.z + mo.height) then
 						return 
 					end
 
 					if (tm.momz > 0)
 						if (tm.z + tm.height + tm.momz < (mo.z-(mo.height/4))) then return end -- extra leeway
-					elseif (tm.z + tm.height < (mo.z-(mo.height/4)))
+					elseif (tm.z + tm.height < (mo.z-(mo.height/4))) then
 						return
 					end
 					
 					if (mo.justTouched == p) then return end -- you already touched this ring get lost!
 					
-					if (mo.removeTouchLimit <= 0)
+					if (mo.removeTouchLimit <= 0) then
 						doRingAward(p, 1 + (mo.extraamt and mo.extraamt or 0), true)
 						mo.justTouched = p
 						mo.removeTouchLimit = cv_mrRespawnTics
 						
-						if ((not mo.ismapring) or (mapheaderinfo[gamemap].noringrespawn == "true"))
+						if ((not mo.ismapring) or (mapheaderinfo[gamemap].noringrespawn == "true")) then
 							P_RemoveMobj(mo)
 							return
 						end
@@ -1336,24 +1359,25 @@ addHook("MobjCollide", function(tm, mo)
 				end
 				p = nil
 			end
-		elseif (mo.type == MT_PLAYER)
+		elseif (mo.type == MT_PLAYER) then
 			if ((tm) and (tm.player))
 				local p = tm.player
+				local rs = getRingstuff(p)
 				
-				if (tm.momz < 0)
+				if (tm.momz < 0) then
 					if (tm.z + tm.momz > mo.z + mo.height) then return end
-				elseif (tm.z > mo.z + mo.height) 
+				elseif (tm.z > mo.z + mo.height) then
 					return 
 				end
 
-				if (tm.momz > 0)
+				if (tm.momz > 0) then
 					if (tm.z + tm.height + tm.momz < (mo.z)) then return end
-				elseif (tm.z + tm.height < (mo.z))
+				elseif (tm.z + tm.height < (mo.z)) then
 					return
 				end
 				
 				if mo.player and cv_bumploserings.value then
-					p.v2r_bumped = mo.player
+					rs.bumped = mo.player
 				end
 			end
 		end
@@ -1364,7 +1388,7 @@ addHook("MobjThinker", function(mo)
 	if not (mo.valid) then return end
 
 	if mo.ismapring then
-		if (not mo.gimmeshadow)
+		if (not mo.gimmeshadow) then
 			P_SpawnShadowMobj(mo)
 			//print("I'm a map ring")
 			mo.gimmeshadow = true
