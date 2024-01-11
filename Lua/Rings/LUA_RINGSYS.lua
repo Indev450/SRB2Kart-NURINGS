@@ -222,6 +222,25 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
     CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
 end)
 
+COM_AddCommand("ring_usedelay", function(p, dodelay)
+	local rs = getRingstuff(p)
+
+    if not dodelay then
+        CONS_Printf(p, "Delay before ring use is "..(rs.noUseDelay and "\133disabled" or "\131enabled"))
+        return
+    end
+
+    local useDelay = {
+        yes = true,
+        ["1"] = true,
+        on = true,
+    }
+    
+    rs.noUseDelay = not useDelay[dodelay:lower()]
+    
+    CONS_Printf(p, "Delay before ring use is "..(rs.noUseDelay and "\133disabled" or "\131enabled"))
+end)
+
 states[S_RINGSO] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 2, S_RINGSO}
 states[S_V2RFDE] = {SPR_RGFD, FF_ANIMATE|FF_TRANS50, -1, nil, 23, 2, S_V2RFDE}
 states[S_USERNG] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 1, S_USERNG}
@@ -770,7 +789,8 @@ addHook("MobjThinker", function(mo)
 		if ((p.cmd.buttons & BT_USERING) and not (p.kartstuff[k_growshrinktimer] > 0))
 			rs.atkDownTime = $1 + 1
 		else
-			rs.atkDownTime = -10 -- preventing instant use after using an item
+			rs.atkDownTime = rs.noUseDelay and -1 or -10 -- preventing instant use after using an item
+			-- -1 when delay is disabled actually helps to avoid 4 tics delay because of '% 4' bellow
 		end
         
 		if ((p.cmd.buttons & BT_USERING) and itemCheck and (not spinCheck) and (((rs.atkDownTime % 4) == 0))  and (rs.atkDownTime >= 0) and (leveltime >= 268))
