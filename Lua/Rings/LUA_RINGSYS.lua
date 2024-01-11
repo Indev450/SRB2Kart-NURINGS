@@ -651,6 +651,8 @@ addHook("MobjThinker", function(mo)
 			rs.ringsUsed = 0 -- can't use any more than 10 rings
 			rs.awardTimer = 0 -- increment when you have rings being awarded
 			rs.boost = 0
+			rs.lfstartboost = 0 -- startboost from previous frame used for compat
+			rs.lflfsneakertimer = 0 -- sneakertimer from previous frame used for compat
 			rs.init = true
 		end
 		
