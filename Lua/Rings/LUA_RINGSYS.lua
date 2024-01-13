@@ -1139,7 +1139,7 @@ addHook("MobjThinker", function(mo)
 		local finY = targ.y + (P_RandomRange(-jitter, jitter) * mos)
 		local finZ = targ.z + ((targ.height*3)/2) + (P_RandomRange(-jitter, jitter) * mos)
 		//rgs_hideAlert(mo, p)
-		brg_alertVisibilityLogic(mo.target.player, mo)
+		brg_alertVisibilityLogic(p, mo)
 		mo.noTargBuffer = 0
 		mo.colorized = true
 		mo.color = targ.color
@@ -1148,8 +1148,9 @@ addHook("MobjThinker", function(mo)
 		finX = nil
 		finY = nil
 		finZ = nil
-		if (mo.target.player.playerstate == PST_DEAD)
-			mo.target.player.stingAlertMobj = nil
+		if (p.playerstate == PST_DEAD)
+			local rs = getRingstuff(p)
+			rs.stingAlertMobj = nil
 			P_RemoveMobj(mo)
 		end
 	else
