@@ -1070,6 +1070,8 @@ rawset(_G, "doRingSpill", function(p, amount)
 	local rs = getRingstuff(p)
 	local mo = p.mo
 
+	if not mo then return end
+
 	if not rs.spill then
 		local mos = mapobjectscale
 		local numRingsDrop = (ringsting.value == 1) and amount or min(amount, rs.numRings)
@@ -1090,7 +1092,6 @@ rawset(_G, "doRingSpill", function(p, amount)
 		end
 
 		if rs.numRings > 0 then
-			S_StartSound(mo, rings.spillsound)
 			for i = 1, numRingsDrop do
 				local plrRing = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_RINGSO)
 				plrRing.momx = 9*cos((mo.angle-(ringSpawnAng*ANG1))+((ringSpillAng*i)*ANG1))
@@ -1100,6 +1101,7 @@ rawset(_G, "doRingSpill", function(p, amount)
 				plrRing.grabBuffer = 7
 			end
 			rs.numRings = $1 - numRingsDrop
+			S_StartSound(mo, rings.spillsound)
 		elseif ringsting.value == 1 then
 			for i = 1, stungAmount do
 				local plrSpike = P_SpawnMobj(mo.x, mo.y, mo.z+(5*mos), MT_STINGSPIKE)
