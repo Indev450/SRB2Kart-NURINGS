@@ -1,11 +1,10 @@
-local loaded = false
-local config_loading = false -- Don't reload config when we already loading it
+local config_loading = false -- Don't update config when we already loading it
 local config = "nurings.cfg"
 
 local function loadConfig()
-	if loaded or not consoleplayer then return end
+	if (not consoleplayer) or consoleplayer.ringsconfig_loaded then return end
 
-	loaded = true
+	consoleplayer.ringsconfig_loaded = true
 
 	local file = io.open(config)
 
