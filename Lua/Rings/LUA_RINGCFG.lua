@@ -20,8 +20,16 @@ local function loadConfig()
 	file:close()
 end
 
+local function getRingstuff(player)
+	if not player.ringstuff then player.ringstuff = {} end
+
+	return player.ringstuff
+end
+
 local function saveConfig()
 	if not consoleplayer then return end
+
+	local rs = getRingstuff(consoleplayer)
 
 	local file, err = io.open(config, "w")
 
@@ -37,11 +45,13 @@ local function saveConfig()
         [BT_CUSTOM3] = "custom3",
     }
 
-	local button = buttonnames[consoleplayer.ringButton or BT_ATTACK]
-	local itemcheck = (not consoleplayer.ringNoItemCheck) and "1" or "0"
+	local button = buttonnames[rs.button or BT_ATTACK]
+	local itemcheck = (not rs.noItemCheck) and "1" or "0"
+	local usedelay = (not rs.noUseDelay) and "1" or "0"
 
 	file:write(string.format("ring_button %s\n", button))
 	file:write(string.format("ring_itemcheck %s\n", itemcheck))
+	file:write(string.format("ring_usedelay %s\n", usedelay))
 
 	file:close()
 end
