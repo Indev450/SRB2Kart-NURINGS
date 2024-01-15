@@ -110,23 +110,29 @@ local cv_bumploserings = CV_RegisterVar({
 }) -- Allow getting rings on maps with itemboces
 
 -- colorize sticker
-local cv_colorizeringbar = CV_RegisterVar({
+local cv_colorizeringbar = CONFIG_RegisterVar({
 	name = "ring_barcolourize",
 	defaultvalue = "Off",
-	flags = CV_SHOWMODIF,
 	possiblevalue = CV_OnOff,
+
+	config_menu = "Rings",
+	displayname = "Ring Bar Color",
+	description = "Colorize ring bar (inverted on clients that support colorized hud)",
 }) -- colorize sticker, reversed if client suppors colorized hud
 
-local cv_ringbarx = CV_RegisterVar({
+local cv_ringbarx = CONFIG_RegisterVar({
     name = "ring_barxoffset",
     defaultvalue = "0",
-    flags = CV_SHOWMODIF,
+
+	config_menu = "Rings",
+	displayname = "Ring Bar Offsets",
+	description = "Change the offsets for ring bar.",
+	config_hudmove = "ring_baryoffset",
 }) -- bar x offset
 
 local cv_ringbary = CV_RegisterVar({
     name = "ring_baryoffset",
     defaultvalue = "0",
-    flags = CV_SHOWMODIF,
 }) -- bar y offset
 
 local function getRingstuff(p)
@@ -201,6 +207,8 @@ COM_AddCommand("ring_button", function(p, bname)
     rs.button = button
     
     CONS_Printf(p, "Set ring use button to \131"..buttonnames[rs.button or BT_ATTACK])
+
+	updateRingsConfig()
 end)
 
 COM_AddCommand("ring_itemcheck", function(p, docheck)
@@ -218,8 +226,10 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
     }
     
     rs.noItemCheck = not itemCheck[docheck:lower()]
-    
+
     CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
+
+	updateRingsConfig()
 end)
 
 COM_AddCommand("ring_usedelay", function(p, dodelay)
@@ -237,8 +247,10 @@ COM_AddCommand("ring_usedelay", function(p, dodelay)
     }
     
     rs.noUseDelay = not useDelay[dodelay:lower()]
-    
+
     CONS_Printf(p, "Delay before ring use is "..(rs.noUseDelay and "\133disabled" or "\131enabled"))
+
+	updateRingsConfig()
 end)
 
 states[S_RINGSO] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 2, S_RINGSO}
