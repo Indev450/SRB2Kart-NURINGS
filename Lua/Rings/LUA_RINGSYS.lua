@@ -236,7 +236,7 @@ COM_AddCommand("ring_usedelay", function(p, dodelay)
 	local rs = getRingstuff(p)
 
     if not dodelay then
-        CONS_Printf(p, "Delay before ring use is "..(rs.noUseDelay and "\133disabled" or "\131enabled"))
+        CONS_Printf(p, "Delay before ring use is "..(rs.useDelay and "\131enabled" or "\133disabled"))
         return
     end
 
@@ -246,9 +246,9 @@ COM_AddCommand("ring_usedelay", function(p, dodelay)
         on = true,
     }
     
-    rs.noUseDelay = not useDelay[dodelay:lower()]
+    rs.useDelay = useDelay[dodelay:lower()]
 
-    CONS_Printf(p, "Delay before ring use is "..(rs.noUseDelay and "\133disabled" or "\131enabled"))
+    CONS_Printf(p, "Delay before ring use is "..(rs.useDelay and "\131enabled" or "\133disabled"))
 
 	updateRingsConfig()
 end)
@@ -803,7 +803,7 @@ addHook("MobjThinker", function(mo)
 		if ((p.cmd.buttons & BT_USERING) and not (p.kartstuff[k_growshrinktimer] > 0))
 			rs.atkDownTime = $1 + 1
 		else
-			rs.atkDownTime = rs.noUseDelay and -1 or -10 -- preventing instant use after using an item
+			rs.atkDownTime = rs.useDelay and -10 or -1 -- preventing instant use after using an item
 			-- -1 when delay is disabled actually helps to avoid 4 tics delay because of '% 4' bellow
 		end
         
