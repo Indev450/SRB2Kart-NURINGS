@@ -231,7 +231,7 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
         ["1"] = true,
         on = true,
     }
-    
+
     rs.noItemCheck = not itemCheck[docheck:lower()]
 
     CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
@@ -239,23 +239,48 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
 	updateRingsConfig()
 end)
 
-COM_AddCommand("ring_usedelay", function(p, dodelay)
+local function printDelay(p, delay)
+	if not delay then
+		CONS_Printf(p, "Delay before ring use is \133disabled")
+	else
+		CONS_Printf(p, "Delay before ring use is "..delay.." tic"..(delay > 1 and 's' or ''))
+	end
+end
+
+COM_AddCommand("ring_usedelay", function(p, delay)
 	local rs = getRingstuff(p)
 
-    if not dodelay then
-        CONS_Printf(p, "Delay before ring use is "..(rs.useDelay and "\131enabled" or "\133disabled"))
+	-- Compatibility with configs from prev version
+	local useDelay = {
+        yes = 10,
+        on = 10,
+
+		off = 0,
+		no = 0,
+    }
+
+    if not delay then
+		printDelay(p, rs.useDelay)
+		CONS_Printf(p, "ring_usedelay <number> to change ring use delay")
         return
     end
 
-    local useDelay = {
-        yes = true,
-        ["1"] = true,
-        on = true,
-    }
-    
-    rs.useDelay = useDelay[dodelay:lower()]
+	local delay_num = tonumber(delay)
 
-    CONS_Printf(p, "Delay before ring use is "..(rs.useDelay and "\131enabled" or "\133disabled"))
+	if delay_num ~= nil and delay_num >= 0 then
+		rs.useDelay = delay_num
+	else
+		delay_num = useDelay[delay:lower()]
+
+		if delay_num == nil then
+			CONS_Printf(p, delay.." is not possible value for ring_usedelay")
+			return
+		end
+
+		rs.useDelay = delay_num
+	end
+
+	printDelay(p, rs.useDelay)
 
 	updateRingsConfig()
 end)
@@ -810,7 +835,7 @@ addHook("MobjThinker", function(mo)
 		if ((p.cmd.buttons & BT_USERING) and not (p.kartstuff[k_growshrinktimer] > 0))
 			rs.atkDownTime = $1 + 1
 		else
-			rs.atkDownTime = rs.useDelay and -10 or -1 -- preventing instant use after using an item
+			rs.atkDownTime = -(rs.useDelay or 0)-1 -- preventing instant use after using an item
 			-- -1 when delay is disabled actually helps to avoid 4 tics delay because of '% 4' bellow
 		end
         
