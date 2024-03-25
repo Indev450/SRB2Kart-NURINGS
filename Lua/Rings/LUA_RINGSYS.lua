@@ -1426,9 +1426,9 @@ addHook("MobjThinker", function(mo)
 		end
 	end
 	
-	if (mo.removeTouchLimit > 0)
+	if mo.removeTouchLimit then
 		if (mo.state ~= S_INVISIBLE) then mo.state = S_INVISIBLE end
-		mo.removeTouchLimit = $1 - 1
+		mo.removeTouchLimit = max($ - 1, 0)
 	else
 		if ((mo.state ~= S_RINGSO) and (not rings.customrgsprite)) then mo.state = S_RINGSO end
 		
