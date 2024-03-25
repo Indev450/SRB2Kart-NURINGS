@@ -109,6 +109,13 @@ local cv_bumploserings = CV_RegisterVar({
    end
 }) -- Allow getting rings on maps with itemboces
 
+local cv_spbringextrareward = CV_RegisterVar({
+	name = "spbringextrareward",
+	defaultvalue = "1",
+	flags = CV_NETVAR,
+	PossibleValue = CV_Unsigned,
+})
+
 -- colorize sticker
 local cv_colorizeringbar = CONFIG_RegisterVar({
 	name = "ring_barcolourize",
@@ -962,9 +969,11 @@ addHook("MobjThinker", function(mo)
 		
 		if (mo.chasetime and (mo.chasetime % 12 == 0))
 			local spbring = P_SpawnMobj(mo.x, mo.y, mo.z, MT_RINGSOMAP)
-			spbring.colorized = true
-			spbring.color = SKINCOLOR_RED
-			spbring.extraamt = 1
+			if cv_spbringextrareward.value then
+				spbring.colorized = true
+				spbring.color = SKINCOLOR_RED
+			end
+			spbring.extraamt = cv_spbringextrareward.value
             spbring.scale = 3*mapobjectscale/2
 			spbring.fuse = 20*TICRATE
             spbring.flags = $|MF_NOCLIPHEIGHT
