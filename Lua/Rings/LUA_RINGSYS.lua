@@ -1441,7 +1441,7 @@ addHook("MobjThinker", function(mo)
 	mo.momy = 0
 	mo.momz = 0
 	
-    P_MoveOrigin(mo, mo.spawnx, mo.spawny, mo.spawnz) // you STAY PUT dammit
+    --P_MoveOrigin(mo, mo.spawnx, mo.spawny, mo.spawnz) // you STAY PUT dammit
     
 	if not (mo.valid) then return end
 	
