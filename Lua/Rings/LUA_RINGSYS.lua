@@ -1377,7 +1377,7 @@ addHook("MobjCollide", function(tm, mo)
 					
 					if (mo.justTouched == p) then return end -- you already touched this ring get lost!
 					
-					if (mo.removeTouchLimit <= 0) then
+					if not mo.removeTouchLimit then
 						doRingAward(p, 1 + (mo.extraamt and mo.extraamt or 0), true)
 						mo.justTouched = p
 						mo.removeTouchLimit = cv_mrRespawnTics
