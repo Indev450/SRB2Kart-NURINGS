@@ -404,12 +404,6 @@ local function rgs_hideAlert(mo, p)
 	end
 end
 
-local thisplayer
-
-hud.add(function(v, p, c)
-	thisplayer = p
-end)
-
 local function spawnRingPoint(source, amount)
 	source.ringpt = P_SpawnMobj(source.mo.x, source.mo.y, source.mo.z, MT_RINGPOINT)
 	source.ringpt.target = source.mo
@@ -478,7 +472,7 @@ addHook("MobjThinker", function(mo)
 	if not (mo.target and mo.target.valid) then return end
 	if not (mo.target.player and mo.target.player.valid) then return end
 	K_MatchGenericExtraFlags(mo, mo.target)
-	if (mo.target.player != thisplayer and (not splitscreen)) then mo.flags2 = $|MF2_DONTDRAW else mo.flags2 = $&(~MF2_DONTDRAW) end
+	if (mo.target.player != consoleplayer and (not splitscreen)) then mo.flags2 = $|MF2_DONTDRAW else mo.flags2 = $&(~MF2_DONTDRAW) end
 
 	local targetHeight = min(48 * mo.target.scale, mo.target.height)
 	if mo.target.player.ringpt ~= mo then
