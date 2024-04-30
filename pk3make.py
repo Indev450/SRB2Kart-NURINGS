@@ -159,7 +159,7 @@ async def main(args):
 			listfile = open(args.listfile, "r")
 	except (FileNotFoundError, TypeError):
 		print("No list file", f"named {args.listfile} was found." if args.listfile else "specified.")
-		print("Try './pk3make.py build/sglua.txt'")
+		print("Try './pk3make.py build/nurings.txt'")
 		sys.exit()
 
 	# detect zopfli?
