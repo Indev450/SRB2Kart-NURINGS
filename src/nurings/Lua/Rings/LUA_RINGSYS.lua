@@ -239,52 +239,6 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
 	updateRingsConfig()
 end)
 
-local function printDelay(p, delay)
-	if not delay then
-		CONS_Printf(p, "Delay before ring use is \133disabled")
-	else
-		CONS_Printf(p, "Delay before ring use is "..delay.." tic"..(delay > 1 and 's' or ''))
-	end
-end
-
-COM_AddCommand("ring_usedelay", function(p, delay)
-	local rs = getRingstuff(p)
-
-	-- Compatibility with configs from prev version
-	local useDelay = {
-        yes = 10,
-        on = 10,
-
-		off = 0,
-		no = 0,
-    }
-
-    if not delay then
-		printDelay(p, rs.useDelay)
-		CONS_Printf(p, "ring_usedelay <number> to change ring use delay")
-        return
-    end
-
-	local delay_num = tonumber(delay)
-
-	if delay_num ~= nil and delay_num >= 0 then
-		rs.useDelay = delay_num
-	else
-		delay_num = useDelay[delay:lower()]
-
-		if delay_num == nil then
-			CONS_Printf(p, delay.." is not possible value for ring_usedelay")
-			return
-		end
-
-		rs.useDelay = delay_num
-	end
-
-	printDelay(p, rs.useDelay)
-
-	updateRingsConfig()
-end)
-
 states[S_RINGSO] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 2, S_RINGSO}
 states[S_V2RFDE] = {SPR_RGFD, FF_ANIMATE|FF_TRANS50, -1, nil, 23, 2, S_V2RFDE}
 states[S_USERNG] = {SPR_RNGS, FF_ANIMATE, -1, nil, 23, 1, S_USERNG}
@@ -822,17 +776,33 @@ addHook("MobjThinker", function(mo)
 		end
 
         local BT_USERING = rs.button or BT_ATTACK
-        local itemCheck = rs.noItemCheck or BT_USERING ~= BT_ATTACK or (p.kartstuff[k_itemroulette] == 0) and (p.kartstuff[k_itemamount] <= 0)
-        local spinCheck = P_PlayerInPain(p) or p.kartstuff[k_spinouttimer] or p.kartstuff[k_wipeoutslow]
+        local itemCheck = rs.noItemCheck or BT_USERING ~= BT_ATTACK or (p.kartstuff[k_itemroulette] == 0 and p.kartstuff[k_itemamount] <= 0)
+        local spinCheck = not (P_PlayerInPain(p) or p.kartstuff[k_spinouttimer] or p.kartstuff[k_wipeoutslow])
+
+		-- Ugh maybe this could be done better way?
+		if BT_USERING == BT_ATTACK then
+			-- If we have item and about to use it, block ring usage
+			if not itemCheck and (p.cmd.buttons & BT_USERING) ~= 0 then
+				rs.blockRingUse = true
+			end
+
+			-- If we don't have item AND released item button, allow ring usage back
+			if itemCheck and (p.cmd.buttons & BT_USERING) == 0 then
+				rs.blockRingUse = false
+			end
+
+			if rs.blockRingUse then
+				itemCheck = false
+			end
+		end
 
 		if (p.cmd.buttons & BT_USERING) and p.kartstuff[k_growshrinktimer] <= 0 then
 			rs.atkDownTime = $1 + 1
 		else
-			rs.atkDownTime = -(rs.useDelay or 0)-1 -- preventing instant use after using an item
-			-- -1 when delay is disabled actually helps to avoid 4 tics delay because of '% 4' bellow
+			rs.atkDownTime = -1 -- -1 - when it is incremented it becomes 0 so (0 % 4) will give 0 and we use ring instantly
 		end
 
-		if (p.cmd.buttons & BT_USERING) and itemCheck and not spinCheck and (rs.atkDownTime % 4) == 0  and rs.atkDownTime >= 0 and leveltime >= 268 then
+		if (p.cmd.buttons & BT_USERING) and itemCheck and spinCheck and (rs.atkDownTime % 4) == 0  and rs.atkDownTime >= 0 and leveltime >= 268 then
 			local mos = mapobjectscale
 
 			if rs.numRings > 0 and not dontBoost and rs.ringsUsed <= rings.ringusecap then

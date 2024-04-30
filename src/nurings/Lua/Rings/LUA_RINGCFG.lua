@@ -46,11 +46,9 @@ local function saveConfig()
 
 	local button = buttonnames[rs.button or BT_ATTACK]
 	local itemcheck = (not rs.noItemCheck) and "1" or "0"
-	local usedelay = tostring(rs.useDelay or 0)
 
 	file:write(string.format("ring_button %s\n", button))
 	file:write(string.format("ring_itemcheck %s\n", itemcheck))
-	file:write(string.format("ring_usedelay %s\n", usedelay))
 
 	file:close()
 end
