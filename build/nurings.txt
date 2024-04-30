@@ -1,0 +1,9 @@
+$basepath src/nurings/
+$output out/nurings.pk3
+
+# Has to go first
+Lua/Rings/LUA_RINGCFG.lua
+
+# Everything else
+Lua/**
+**
