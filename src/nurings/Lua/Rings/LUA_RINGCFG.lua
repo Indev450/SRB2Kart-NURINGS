@@ -1,20 +1,13 @@
-local config_loading = false -- Don't update config when we already loading it
 local config = "nurings.cfg"
 
 local function loadConfig()
-	if (not consoleplayer) or consoleplayer.ringsconfig_loaded then return end
-
-	consoleplayer.ringsconfig_loaded = true
-
 	local file = io.open(config)
 
 	if not file then return end -- No config created yet
 
-	config_loading = true
 	for line in file:lines() do
 		COM_BufAddText(consoleplayer, line)
 	end
-	config_loading = false
 
 	file:close()
 end
@@ -53,12 +46,17 @@ local function saveConfig()
 	file:close()
 end
 
-addHook("MapLoad", loadConfig)
-addHook("NetVars", loadConfig)
+addHook("PlayerJoin", function(pnum)
+	if not (consoleplayer and pnum == #consoleplayer) then return end
+
+	loadConfig()
+end)
 
 -- Only save config if we aren't loading it already
+-- Used to do that... Can't really do that now because COM_BufAddText won't execute stuff immediately.
+-- Its not really a bad thing for just 2 lines, but will eventually need to fix it... Maybe
 rawset(_G, "updateRingsConfig", function()
-	if not config_loading then saveConfig() end
+	saveConfig()
 end)
 
 -- Support for config script by GenericHeroGuy
