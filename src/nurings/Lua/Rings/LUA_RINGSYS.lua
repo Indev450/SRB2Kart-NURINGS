@@ -8,8 +8,7 @@ freeslot("SPR_HIT4","SPR_HIT5","SPR_HIT6","SPR_HIT7","SPR_HIT8","SPR_HIT9","SPR_
 freeslot("SPR_STSP", "S_STGSPK", "S_STGSP1", "S_STGSP2", "MT_STINGSPIKE")
 freeslot("SPR_STAL", "S_STALR1", "S_STALR2", "MT_STINGALERT")
 
-freeslot("sfx_stgram")
-sfxinfo[sfx_stgram].flags = $|SF_X8AWAYSOUND -- unique "BLAM" sound for a ring-sting ram
+freeslot("sfx_ringlw") -- Player when using rings and player has less than 10 of them left
 
 rawset(_G, "rings", {
 	grabsound = sfx_s227,
@@ -900,7 +899,11 @@ addHook("MobjThinker", function(mo)
 
 			local rs = getRingstuff(p)
 
-			S_StartSound(mo.target,rings.usesound)
+			S_StartSound(mo.target, rings.usesound)
+
+			if rs.numRings <= 10 then
+				S_StartSoundAtVolume(mo.target, sfx_ringlw, 255 - rs.numRings*10)
+			end
 
 			if rs.strongermt and rs.ringsUsed < 5 then
 				rs.strongermt = false
