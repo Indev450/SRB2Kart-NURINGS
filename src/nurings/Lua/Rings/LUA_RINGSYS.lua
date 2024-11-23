@@ -825,7 +825,7 @@ addHook("MobjThinker", function(mo)
 			rs.atkDownTime = -1 -- -1 - when it is incremented it becomes 0 so (0 % 4) will give 0 and we use ring instantly
 		end
 
-		if (p.cmd.buttons & BT_USERING) and itemCheck and spinCheck and rs.atkDownTime > rs.useDelay and ((rs.atkDownTime - rs.useDelay) % 4) == 0  and rs.atkDownTime >= 0 and leveltime >= 268 then
+		if (p.cmd.buttons & BT_USERING) and itemCheck and spinCheck and rs.atkDownTime >= rs.useDelay and ((rs.atkDownTime - rs.useDelay) % 4) == 0  and rs.atkDownTime >= 0 and leveltime >= 268 then
 			local mos = mapobjectscale
 
 			if rs.numRings > 0 and not dontBoost and rs.ringsUsed <= rings.ringusecap then
