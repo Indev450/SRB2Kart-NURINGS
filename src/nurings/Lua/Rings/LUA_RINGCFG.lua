@@ -42,6 +42,7 @@ local function saveConfig()
 
 	file:write(string.format("ring_button %s\n", button))
 	file:write(string.format("ring_itemcheck %s\n", itemcheck))
+	file:write(string.format("ring_usedelay %d\n", rs.useDelay))
 
 	file:close()
 end

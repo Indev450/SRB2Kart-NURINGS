@@ -143,7 +143,9 @@ local cv_ringbary = CV_RegisterVar({
 
 local function getRingstuff(p)
 	if not p.ringstuff then
-		p.ringstuff = {}
+		p.ringstuff = {
+			useDelay = 0,
+		}
 	end
 
 	return p.ringstuff
@@ -184,7 +186,7 @@ COM_AddCommand("ring_button", function(p, bname)
     }
 
     if not bname then
-        local button = buttonnames[rs.button or BT_ATTACK]
+        local button = buttonnames[rs.button]
 
         CONS_Printf(p, "Ring use button: \131"..button.."\n")
         CONS_Printf(p, "Usage: ring_button <button name>")
@@ -234,6 +236,28 @@ COM_AddCommand("ring_itemcheck", function(p, docheck)
     rs.noItemCheck = not itemCheck[docheck:lower()]
 
     CONS_Printf(p, "Item check for ring use is "..(rs.noItemCheck and "\133disabled" or "\131enabled"))
+
+	updateRingsConfig()
+end)
+
+COM_AddCommand("ring_usedelay", function(p, delay)
+	local rs = getRingstuff(p)
+
+    if not delay then
+        CONS_Printf(p, "Delay for ring use is "..rs.useDelay)
+        return
+	end
+
+	delay = tonumber(delay)
+
+	if delay == nil then
+		CONS_Printf(p, "Please type number")
+		return
+	end
+
+    rs.useDelay = delay
+
+    CONS_Printf(p, "Delay for ring use is now "..rs.useDelay)
 
 	updateRingsConfig()
 end)
@@ -801,7 +825,7 @@ addHook("MobjThinker", function(mo)
 			rs.atkDownTime = -1 -- -1 - when it is incremented it becomes 0 so (0 % 4) will give 0 and we use ring instantly
 		end
 
-		if (p.cmd.buttons & BT_USERING) and itemCheck and spinCheck and (rs.atkDownTime % 4) == 0  and rs.atkDownTime >= 0 and leveltime >= 268 then
+		if (p.cmd.buttons & BT_USERING) and itemCheck and spinCheck and rs.atkDownTime > rs.useDelay and ((rs.atkDownTime - rs.useDelay) % 4) == 0  and rs.atkDownTime >= 0 and leveltime >= 268 then
 			local mos = mapobjectscale
 
 			if rs.numRings > 0 and not dontBoost and rs.ringsUsed <= rings.ringusecap then
