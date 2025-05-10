@@ -844,6 +844,9 @@ addHook("MobjThinker", function(mo)
 end, MT_PLAYER)
 
 addHook("MobjThinker", function(mo)
+	if not mo.valid then return end
+	if not ringsOn then return end
+
 	local mos = mapobjectscale
 
 	if rings.customrgsprite and mo.state ~= rings.customrgsprite then
@@ -903,6 +906,9 @@ addHook("MobjThinker", function(mo)
 end, MT_RINGGET)
 
 addHook("MobjThinker", function(mo)
+	if not mo.valid then return end
+	if not ringsOn then return end
+
 	local mos = mapobjectscale
 
 	if rings.customrgsprite and mo.state ~= rings.customrgsprite then
